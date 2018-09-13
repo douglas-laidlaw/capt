@@ -1,6 +1,6 @@
-import numpy
 import yaml
 import time
+import numpy
 import itertools
 from scipy.misc import comb
 from matplotlib import pyplot; pyplot.ion()
