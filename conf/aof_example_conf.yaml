@@ -1,0 +1,93 @@
+TELESCOPE:
+  ao_system: AOF
+  tel_diam: 8.2
+  obs_diam: 0.94
+  mask: circle
+
+SHWFS:
+  n_wfs: 2
+  nx_subap: [40, 40]
+  n_subap: [1248, 1248]
+  loop_time: 0.001
+  plate_scale: 4.54
+  subap_diam: [0.205, 0.205]
+  gs_alt: [0., 0.]
+  wavelength: [500e-9, 500e-9]
+  subap_fov: [1.5, 1.5]
+  pxls_per_subap: [10, 10]
+  offset_present: False
+  shift_offset_x: [0., 0.]
+  shift_offset_y: [0., 0.]
+  rotational_offset: [0., 0.]
+
+FITTING PARAMETERS:
+  n_layer: 2.
+  layer_alt: [0., 9282.]
+  guess_r0: [0.2, 0.2]
+  guess_L0: [25., 25.]
+
+TARGET ARRAY:
+  cent_start: 0
+  data_type: analytical
+  input_matrix: True
+  covariance_matrix: False
+  covariance_matrix_no_xy: False
+  covariance_map: False
+  covariance_map_roi: True
+  tt_track_present: False
+  tt_track: [0., 0.]
+  zeroSep_cov: False
+  mapping_type: mean
+  map_axis: 'x and y'
+  roi_belowGround: 0
+  roi_envelope: 0
+
+FITTING ALGORITHM:
+  type: l3s
+  repetitions: 1
+  styc_method: True
+  force_altRange: True
+  huge_matrix: False
+  print_fitting: True
+  cn2_noiseFloor: 1e-16
+  remove_tt: False
+  output_fitted_array: False
+  fit_unsensed: False
+
+  direct:
+    fit_r0: True
+    fit_L0: False
+    fit_globalL0: False
+    fit_groundL0: False
+    fit_rot: False
+    fit_shift: False
+    fit_tt_track: True
+    fit_lgs_track: False
+
+  l3s:
+    fit_1_r0: True
+    fit_1_L0: False
+    fit_1_globalL0: False
+    fit_1_rot: False
+    fit_1_shift: False
+    fit_1_lgs_track: False
+
+    fit_2_r0: True
+    fit_2_L0: True
+    fit_2_rot: False
+    fit_2_shift: False
+    fit_2_tt_track: True
+    fit_2_lgs_track: False
+
+    fit_3: False
+    fit_3_r0: False
+    fit_3_L0: False
+    fit_3_globalL0: False
+    fit_3_groundL0: False
+    fit_3_rot: True
+    fit_3_shift: True
+    fit_3_tt_track: False
+    fit_3_lgs_track: False
+    roi_belowGround_l3s3: 1
+    roi_envelope_l3s3: 1
+
