@@ -1,0 +1,83 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+CovarianceMatrix	slopecovariance_edit.py	/^class CovarianceMatrix(object):$/;"	kind:class	line:27
+GSALT	oldSlopeCovariance_edit.py	/^    GSALT = numpy.array([0]*NWFS)$/;"	kind:variable	line:467
+GSALT	slopecovariance_edit.py	/^    GSALT = numpy.array([0]*NWFS)$/;"	kind:variable	line:496
+GSPOS	oldSlopeCovariance_edit.py	/^    GSPOS = numpy.array(([0,-20],[0,20])) * (1.\/3600) * (numpy.pi\/180.)$/;"	kind:variable	line:461
+GSPOS	slopecovariance_edit.py	/^    GSPOS = numpy.array(([0,-20],[0,20]))$/;"	kind:variable	line:490
+GSTYPE	oldSlopeCovariance_edit.py	/^    GSTYPE = numpy.array([1]*NWFS)$/;"	kind:variable	line:468
+GSTYPE	slopecovariance_edit.py	/^    GSTYPE = numpy.array([1]*NWFS)$/;"	kind:variable	line:497
+L0	oldSlopeCovariance_edit.py	/^    L0 = numpy.array([30.]*NLAYERS)$/;"	kind:variable	line:483
+L0	slopecovariance_edit.py	/^    L0 = numpy.array([30.]*NLAYERS)$/;"	kind:variable	line:513
+LAYERHEIGHTS	oldSlopeCovariance_edit.py	/^    LAYERHEIGHTS = numpy.array([9282.])$/;"	kind:variable	line:484
+LAYERHEIGHTS	slopecovariance_edit.py	/^    LAYERHEIGHTS = numpy.array([9282.])$/;"	kind:variable	line:514
+NCPU	oldSlopeCovariance_edit.py	/^    NCPU = 1$/;"	kind:variable	line:473
+NCPU	slopecovariance_edit.py	/^    NCPU = 1$/;"	kind:variable	line:502
+NLAYERS	oldSlopeCovariance_edit.py	/^    NLAYERS = 1$/;"	kind:variable	line:481
+NLAYERS	slopecovariance_edit.py	/^    NLAYERS = 1$/;"	kind:variable	line:511
+NSUBAPS	oldSlopeCovariance_edit.py	/^    NSUBAPS = numpy.array([36]*NWFS)$/;"	kind:variable	line:465
+NSUBAPS	slopecovariance_edit.py	/^    NSUBAPS = numpy.array([36]*NWFS)$/;"	kind:variable	line:494
+NWFS	oldSlopeCovariance_edit.py	/^    NWFS = GSPOS.shape[0]$/;"	kind:variable	line:463
+NWFS	slopecovariance_edit.py	/^    NWFS = GSPOS.shape[0]$/;"	kind:variable	line:492
+NXSUBAPS	oldSlopeCovariance_edit.py	/^    NXSUBAPS = numpy.array([7]*NWFS)$/;"	kind:variable	line:464
+NXSUBAPS	slopecovariance_edit.py	/^    NXSUBAPS = numpy.array([7]*NWFS)$/;"	kind:variable	line:493
+OBS	oldSlopeCovariance_edit.py	/^    OBS = 0.285$/;"	kind:variable	line:472
+OBS	slopecovariance_edit.py	/^    OBS = 0.285$/;"	kind:variable	line:501
+PART	oldSlopeCovariance_edit.py	/^    PART = 0$/;"	kind:variable	line:474
+PART	slopecovariance_edit.py	/^    PART = 0$/;"	kind:variable	line:503
+PUPILMAG	oldSlopeCovariance_edit.py	/^    PUPILMAG = numpy.array([NXSUBAPS[0]]*NWFS)$/;"	kind:variable	line:470
+PUPILMAG	slopecovariance_edit.py	/^    PUPILMAG = numpy.array([NXSUBAPS[0]]*NWFS)$/;"	kind:variable	line:499
+PUPILROT	oldSlopeCovariance_edit.py	/^    PUPILROT = numpy.array([0]*NWFS)$/;"	kind:variable	line:471
+PUPILROT	slopecovariance_edit.py	/^    PUPILROT = numpy.array([0]*NWFS)$/;"	kind:variable	line:500
+PUPILSHIFT	oldSlopeCovariance_edit.py	/^    PUPILSHIFT = numpy.array([0]*NWFS)$/;"	kind:variable	line:469
+PUPILSHIFT	slopecovariance_edit.py	/^    PUPILSHIFT = numpy.array([0]*NWFS)$/;"	kind:variable	line:498
+PUPIL_MASK	oldSlopeCovariance_edit.py	/^    PUPIL_MASK = pupil.circle(NXSUBAPS[0]\/2., NXSUBAPS[0])$/;"	kind:variable	line:475
+PUPIL_MASK	slopecovariance_edit.py	/^    PUPIL_MASK = [PUPIL_MASK]*NWFS$/;"	kind:variable	line:506
+PUPIL_MASK	slopecovariance_edit.py	/^    PUPIL_MASK = pupil.circle(NXSUBAPS[0]\/2., NXSUBAPS[0])$/;"	kind:variable	line:504
+SUBAPDIAM	oldSlopeCovariance_edit.py	/^    SUBAPDIAM = numpy.array([TEL_DIAM\/NXSUBAPS[0]]*NWFS)$/;"	kind:variable	line:466
+SUBAPDIAM	slopecovariance_edit.py	/^    SUBAPDIAM = numpy.array([TEL_DIAM\/NXSUBAPS[0]]*NWFS)$/;"	kind:variable	line:495
+TEL_DIAM	oldSlopeCovariance_edit.py	/^    TEL_DIAM = 4.2$/;"	kind:variable	line:462
+TEL_DIAM	slopecovariance_edit.py	/^    TEL_DIAM = 4.2$/;"	kind:variable	line:491
+__init__	slopecovariance_edit.py	/^    def __init__($/;"	kind:member	line:54
+_make_covariance_matrix	slopecovariance_edit.py	/^    def _make_covariance_matrix(self):$/;"	kind:member	line:139
+calculate_wfs_separations	slopecovariance_edit.py	/^def calculate_wfs_separations(n_subaps1, n_subaps2, wfs1_positions, wfs2_positions):$/;"	kind:function	line:247
+compute_cov	oldSlopeCovariance_edit.py	/^def compute_cov(du, dv, ac, ad, bc, bd, s1, s2, L0, units):$/;"	kind:function	line:234
+compute_covariance_xx	slopecovariance_edit.py	/^def compute_covariance_xx(separation, subap1_diam, subap2_diam, r0, L0):$/;"	kind:function	line:272
+covMat	oldSlopeCovariance_edit.py	/^    covMat = numpy.zeros((2*NSUBAPS.sum(), 2*NSUBAPS.sum()), dtype="float64")$/;"	kind:variable	line:486
+cov_XX	oldSlopeCovariance_edit.py	/^def cov_XX(du, dv, ac, ad, bc, bd, L0):$/;"	kind:function	line:278
+gam	oldSlopeCovariance_edit.py	/^    gam = numpy.array([waveL]*NWFS)$/;"	kind:variable	line:478
+gam	slopecovariance_edit.py	/^    gam = numpy.array([waveL]*NWFS)$/;"	kind:variable	line:508
+ion	oldSlopeCovariance_edit.py	/^from matplotlib import pyplot; pyplot.ion()$/;"	kind:namespace	line:6
+ion	slopecovariance_edit.py	/^from matplotlib import pyplot; pyplot.ion()$/;"	kind:namespace	line:24
+make_covariance_matrix	slopecovariance_edit.py	/^    def make_covariance_matrix(self):$/;"	kind:member	line:86
+matcov	oldSlopeCovariance_edit.py	/^def matcov($/;"	kind:function	line:9
+mirror_covariance_matrix	slopecovariance_edit.py	/^def mirror_covariance_matrix(cov_mat, n_subaps):$/;"	kind:function	line:460
+multiprocessing	slopecovariance_edit.py	/^import multiprocessing$/;"	kind:namespace	line:18
+myFont	oldSlopeCovariance_edit.py	/^import myFont$/;"	kind:namespace	line:4
+myFont	slopecovariance_edit.py	/^import myFont$/;"	kind:namespace	line:16
+new_structure_function_vk	slopecovariance_edit.py	/^def new_structure_function_vk(separation, r0, L0):$/;"	kind:function	line:416
+numba	oldSlopeCovariance_edit.py	/^import numba$/;"	kind:namespace	line:3
+numpy	oldSlopeCovariance_edit.py	/^import numpy$/;"	kind:namespace	line:2
+numpy	slopecovariance_edit.py	/^import numpy$/;"	kind:namespace	line:20
+o	oldSlopeCovariance_edit.py	/^    o = matcov(NWFS, PUPIL_MASK, TEL_DIAM, NSUBAPS, NXSUBAPS, SUBAPDIAM, GSALT, GSPOS, NLAYERS, LAYERHEIGHTS, r0, L0, covMat, PUPILMAG)/;"	kind:variable	line:487
+oldSlopeCovariance_edit.py	oldSlopeCovariance_edit.py	1;"	kind:file	line:1
+params	slopecovariance_edit.py	/^    params = CovarianceMatrix(NWFS, PUPIL_MASK, TEL_DIAM, SUBAPDIAM, GSALT, GSPOS, gam, NLAYERS, LAYERHEIGHTS, r0, L0, True)$/;"	kind:variable	line:516
+pupil	oldSlopeCovariance_edit.py	/^from aotools.functions import pupil$/;"	kind:namespace	line:5
+pupil	slopecovariance_edit.py	/^from aotools.functions import pupil$/;"	kind:namespace	line:23
+pyplot	oldSlopeCovariance_edit.py	/^from matplotlib import pyplot; pyplot.ion()$/;"	kind:namespace	line:6
+pyplot	slopecovariance_edit.py	/^from matplotlib import pyplot; pyplot.ion()$/;"	kind:namespace	line:24
+r0	oldSlopeCovariance_edit.py	/^    r0 = numpy.array([0.2])$/;"	kind:variable	line:482
+r0	slopecovariance_edit.py	/^    r0 = numpy.array([0.2])$/;"	kind:variable	line:512
+s	slopecovariance_edit.py	/^    s = params.make_covariance_matrix()$/;"	kind:variable	line:517
+scipy	slopecovariance_edit.py	/^import scipy.special$/;"	kind:namespace	line:21
+slopecovariance_edit.py	slopecovariance_edit.py	1;"	kind:file	line:1
+special	slopecovariance_edit.py	/^import scipy.special$/;"	kind:namespace	line:21
+subap_position	oldSlopeCovariance_edit.py	/^def subap_position($/;"	kind:function	line:174
+time	slopecovariance_edit.py	/^import time$/;"	kind:namespace	line:17
+waveL	oldSlopeCovariance_edit.py	/^    waveL = 500e-9$/;"	kind:variable	line:477
+waveL	slopecovariance_edit.py	/^    waveL = 500e-9$/;"	kind:variable	line:507
+wfs_covariance	slopecovariance_edit.py	/^def wfs_covariance(n_subaps1, n_subaps2, wfs1_positions, wfs2_positions, wfs1_diam, wfs2_diam, r0, L0, stycMethod):$/;"	kind:function	line:202
