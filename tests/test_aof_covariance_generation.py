@@ -34,5 +34,5 @@ if __name__ == '__main__':
     canary_tas = numpy.array([(-60, 0), (60., 0.)])
     configuration = capt.configuration('../conf/aof_example_conf.yaml')
 
-    matrix_to_roi = generate_covariance(
+    matrix, roi = generate_covariance(
         configuration, air_mass, canary_tas, pix_arc, shwfs_centroids)

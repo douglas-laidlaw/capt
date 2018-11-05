@@ -1,17 +1,17 @@
 TELESCOPE:
   ao_system: AOF
   tel_diam: 8.2
-  obs_diam: 0.94
+  obs_diam: 1.1
   mask: circle
 
 SHWFS:
   n_wfs: 2
   nx_subap: [40, 40]
-  n_subap: [1248, 1248]
+  n_subap: [1240, 1240]
   loop_time: 0.001
   plate_scale: 4.54
   subap_diam: [0.205, 0.205]
-  gs_alt: [0., 0.]
+  gs_alt: [90000., 90000.]
   wavelength: [500e-9, 500e-9]
   subap_fov: [1.5, 1.5]
   pxls_per_subap: [10, 10]
@@ -21,10 +21,10 @@ SHWFS:
   rotational_offset: [0., 0.]
 
 FITTING PARAMETERS:
-  n_layer: 2.
-  layer_alt: [0., 9282.]
-  guess_r0: [0.2, 0.2]
-  guess_L0: [25., 25.]
+  n_layer: 1.
+  layer_alt: [0.]
+  guess_r0: [0.2]
+  guess_L0: [25.]
 
 TARGET ARRAY:
   cent_start: 0
@@ -36,14 +36,14 @@ TARGET ARRAY:
   covariance_map_roi: True
   tt_track_present: False
   tt_track: [0., 0.]
-  zeroSep_cov: False
+  zeroSep_cov: True
   mapping_type: mean
   map_axis: 'x and y'
   roi_belowGround: 0
   roi_envelope: 0
 
 FITTING ALGORITHM:
-  type: l3s
+  type: direct
   repetitions: 1
   styc_method: True
   force_altRange: True
