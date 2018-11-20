@@ -331,12 +331,12 @@ class covariance_roi_l3s(object):
 
 
 		covMapDim = (self.pupil_mask.shape[0] * 2) - 1
-		onesMat = numpy.ones((self.n_subap[0], self.n_subap[0]))
+		onesMat = numpy.ones((int(self.pupil_mask.sum()), int(self.pupil_mask.sum())))
 		wfs_subap_pos = (numpy.array(numpy.where(self.pupil_mask == 1)).T * self.tel_diam/self.pupil_mask.shape[0])
 		onesMM, onesMMc, mapDensity = get_mappingMatrix(self.pupil_mask, onesMat)
 
-		xPosMM, xMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[0][::-1])
-		yPosMM, yMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[1][::-1])
+		xPosMM, xMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[0])
+		yPosMM, yMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[1])
 
 		xPosMM[onesMM==0] = numpy.nan
 		yPosMM[onesMM==0] = numpy.nan
@@ -349,8 +349,8 @@ class covariance_roi_l3s(object):
 		for comb in range(self.combs):
 			mmLocations = (covMapDim * self.allMapPos[comb,:,:,0]) + self.allMapPos[comb,:,:,1]
 			self.meanDenominator[comb] = onesMM[:,mmLocations].sum(0)
-			ySepsMM = yPosMM[:,mmLocations]
-			xSepsMM = xPosMM[:,mmLocations]
+			ySepsMM = -yPosMM[:,mmLocations]
+			xSepsMM = -xPosMM[:,mmLocations]
 
 			for env in range(self.roi_width):
 				for l in range(self.map_length):
@@ -379,7 +379,7 @@ class covariance_roi_l3s(object):
 
 				for wfs_i in range(2):
 
-					theta = (shwfs_rot[self.selector[comb, wfs_i]]) * numpy.pi/180.
+					theta = (shwfs_rot[self.selector[comb, [1,0][wfs_i]]]) * numpy.pi/180.
 
 					xtp = self.subap_sep_positions[gs_comb, :, :, :, 1].copy()
 					ytp = self.subap_sep_positions[gs_comb, :, :, :, 0].copy()
@@ -388,9 +388,9 @@ class covariance_roi_l3s(object):
 					vv = xtp * numpy.sin(theta) + ytp * numpy.cos(theta)
 
 					self.subap_positions_wfsAlignment[gs_comb, comb,wfs_i,:,
-						:,:,1] = uu + shwfs_shift[self.selector[comb, wfs_i],1]
+						:,:,1] = uu - shwfs_shift[self.selector[comb, wfs_i],0]
 					self.subap_positions_wfsAlignment[gs_comb, comb,wfs_i,:,
-						:,:,0] = vv + shwfs_shift[self.selector[comb, wfs_i],0]
+						:,:,0] = vv - shwfs_shift[self.selector[comb, wfs_i],1]
 
 				self.xy_separations[gs_comb, comb] = -(self.subap_positions_wfsAlignment[gs_comb, comb,0,
 					:,:,:] - self.subap_positions_wfsAlignment[gs_comb, comb, 1, self.map_centre_width,self.map_centre_belowGround])

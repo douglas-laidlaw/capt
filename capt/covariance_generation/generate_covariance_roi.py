@@ -50,7 +50,8 @@ class covariance_roi(object):
 		self.gs_alt = gs_alt
 		self.L0 = L0
 		self.n_layer = n_layer
-		self.n_subap = n_subap#pupil_mask.sum().astype('int')
+		self.n_subap = n_subap
+		self.n_subap_from_pupilMask = int(self.pupil_mask.sum())
 		self.nx_subap = pupil_mask.shape[0]
 		self.radSqaured_to_arcsecSqaured = ((180./numpy.pi) * 3600)**2
 		selector = numpy.array((range(self.n_wfs)))
@@ -93,7 +94,7 @@ class covariance_roi(object):
 			self.compute_cov_offset = False
 			self.meanDenominator = numpy.array([1.]*self.combs)
 			self.xy_separations = xy_separations
-		
+
 		if fit_tt_track==True or tt_track_present==True:
 			self.tt_trackMatrix_locs = tt_trackMatrix_locs(xy_separations.copy(), roi_axis)
 			self.tt_track = numpy.zeros(self.tt_trackMatrix_locs.shape).astype('float64')
@@ -292,12 +293,12 @@ class covariance_roi(object):
 
 
 		covMapDim = (self.pupil_mask.shape[0] * 2) - 1
-		onesMat = numpy.ones((self.n_subap[0], self.n_subap[0]))
+		onesMat = numpy.ones((int(self.pupil_mask.sum()), int(self.pupil_mask.sum())))
 		wfs_subap_pos = (numpy.array(numpy.where(self.pupil_mask == 1)).T * self.tel_diam/self.pupil_mask.shape[0])
 		onesMM, onesMMc, mapDensity = get_mappingMatrix(self.pupil_mask, onesMat)
 
-		xPosMM, xMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[0][::-1])
-		yPosMM, yMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[1][::-1])
+		xPosMM, xMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[0])
+		yPosMM, yMMc, d = get_mappingMatrix(self.pupil_mask, onesMat*wfs_subap_pos.T[1])
 
 		xPosMM[onesMM==0] = numpy.nan
 		yPosMM[onesMM==0] = numpy.nan
@@ -308,10 +309,11 @@ class covariance_roi(object):
 		self.allMapPos[self.allMapPos>=covMapDim] = 0.
 
 		for comb in range(self.combs):
+
 			mmLocations = (covMapDim * self.allMapPos[comb,:,:,0]) + self.allMapPos[comb,:,:,1]
 			self.meanDenominator[comb] = onesMM[:,mmLocations].sum(0)
-			ySepsMM = yPosMM[:,mmLocations]
-			xSepsMM = xPosMM[:,mmLocations]
+			ySepsMM = -yPosMM[:,mmLocations]
+			xSepsMM = -xPosMM[:,mmLocations]
 
 			for env in range(self.roi_width):
 				for l in range(self.roi_length):
@@ -322,7 +324,10 @@ class covariance_roi(object):
 			self.subap_sep_positions[comb,:,:,:,0] = xSeps[comb]
 			self.subap_sep_positions[comb,:,:,:,1] = ySeps[comb]
 
+		# stop
+		# self.meanDenominator[0] = mapDensity
 		self.meanDenominator[self.meanDenominator==0] = 1.
+
 
 
 
@@ -333,12 +338,11 @@ class covariance_roi(object):
 			shwfs_shift (ndarray): SHWFS shift in x and y (m).
 			shwfs_rot (ndarray): SHWFS rotation."""
 
-
 		for comb in range(self.combs):
 
-			for wfs_i in range(2):
+			for wfs_i in range(2):	
 
-				theta = (shwfs_rot[self.selector[comb, wfs_i]]) * numpy.pi/180.
+				theta = (shwfs_rot[self.selector[comb, [1,0][wfs_i]]]) * numpy.pi/180.
 
 				xtp = self.subap_sep_positions[comb, :, :, :, 1]
 				ytp = self.subap_sep_positions[comb, :, :, :, 0]
@@ -347,9 +351,9 @@ class covariance_roi(object):
 				vv = xtp * numpy.sin(theta) + ytp * numpy.cos(theta)
 
 				self.subap_positions_wfsAlignment[comb,wfs_i,:,
-					:,:,1] = uu + shwfs_shift[self.selector[comb, wfs_i],1]
+					:,:,1] = uu - shwfs_shift[self.selector[comb, wfs_i],0]
 				self.subap_positions_wfsAlignment[comb,wfs_i,:,
-					:,:,0] = vv + shwfs_shift[self.selector[comb, wfs_i],0]
+					:,:,0] = vv - shwfs_shift[self.selector[comb, wfs_i],1]
 
 			self.xy_separations[comb] = -(self.subap_positions_wfsAlignment[comb,0,
 				:,:,:] - self.subap_positions_wfsAlignment[comb,1,self.roi_centre_width,self.roi_belowGround])

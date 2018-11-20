@@ -1,8 +1,10 @@
-import numpy
 import math
 import cmath
+import numpy
+import matplotlib
 from aotools.functions import circle
 from matplotlib import pyplot; pyplot.ion()
+matplotlib.rcParams['image.origin'] = 'lower'
 
 
 def gamma_vector(blankCovMap, angle, gs_pos, belowGround, envelope, show_plots=False):
@@ -82,12 +84,12 @@ def gamma_vector(blankCovMap, angle, gs_pos, belowGround, envelope, show_plots=F
 
                     if yStep+(j+1)<blankCovMap.shape[0] and yStep+(j+1)>=0:
                         if xStep<blankCovMap.shape[0] and xStep>=0:
-                            blankCovMap[yStep+j+1, xStep]=(j*2)+2
+                            blankCovMap[yStep+j+1, xStep]=(j*2)+3
                             vector[envelope+(j+1),i] = numpy.array((yStep+j+1, xStep))
-                    
+
                     if yStep-(j+1)<blankCovMap.shape[0] and yStep-(j+1)>=0:
                         if xStep<blankCovMap.shape[0] and xStep>=0:
-                            blankCovMap[yStep-(j+1), xStep]=(j*2)+3
+                            blankCovMap[yStep-(j+1), xStep]=(j*2)+2
                             vector[envelope-(j+1),i] = numpy.array((yStep-(j+1), xStep))
                 count+=1
                 # print 'x, y:', xStep, yStep
@@ -121,16 +123,14 @@ def gamma_vector(blankCovMap, angle, gs_pos, belowGround, envelope, show_plots=F
                         if yStep<blankCovMap.shape[0] and yStep>=0:
                             blankCovMap[yStep, xStep+j+1]=(j*2)+3
                             vector[envelope+j+1,i] = numpy.array((yStep, xStep+j+1))
-                            # vector[int(blankCovMap[yStep, xStep+j+1]-1),i+1] = numpy.array((yStep, xStep+j+1))
                         
                     if xStep-(j+1)<blankCovMap.shape[0] and xStep-(j+1)>=0:
                         if yStep<blankCovMap.shape[0] and yStep>=0:
                             blankCovMap[yStep, xStep-(j+1)]=(j*2)+2
                             vector[envelope-j-1,i] = numpy.array((yStep, xStep-(j+1)))
-                            # vector[int(blankCovMap[yStep, xStep-(j+1)]-1),i+1] = numpy.array((yStep, xStep-(j+1)))
                 count+=1
                 # print 'x, y:', xStep, yStep
-
+    
     if show_plots==True:
         # pyplot.figure('Covariance Map Vector')
         pyplot.figure()
@@ -202,12 +202,15 @@ def advanced_testing(pupil_mask, quad_num):
 
 if __name__ == '__main__':
 
-    gs_pos = numpy.array([[0.,0.], [1.,0.5]])
+    gs_pos = numpy.array([[0.,0.], [1.,0.]])
     pupil_mask = circle(7./2, 7)
     covMapDim = (2*pupil_mask.shape[0])-1
     blankCovMap = numpy.zeros((covMapDim,covMapDim))
-    belowGround = 2
-    envelope = 2
+    belowGround = 6
+    envelope = 6
     a,b,t = gamma_vector(blankCovMap, False, gs_pos, belowGround, envelope, show_plots=False)
+
+    pyplot.figure()
+    pyplot.imshow(a[:,:,1])
 
     advanced_testing(pupil_mask, 4)

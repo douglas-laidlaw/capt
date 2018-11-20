@@ -2,7 +2,7 @@ TELESCOPE:
   ao_system: AOF
   tel_diam: 8.2
   obs_diam: 1.1
-  mask: circle
+  mask: custom
 
 SHWFS:
   n_wfs: 2
@@ -22,8 +22,8 @@ SHWFS:
 
 FITTING PARAMETERS:
   n_layer: 1.
-  layer_alt: [0.]
-  guess_r0: [0.2]
+  layer_alt: [4000.]
+  guess_r0: [0.05]
   guess_L0: [25.]
 
 TARGET ARRAY:
@@ -36,11 +36,11 @@ TARGET ARRAY:
   covariance_map_roi: True
   tt_track_present: False
   tt_track: [0., 0.]
-  zeroSep_cov: True
+  zeroSep_cov: False
   mapping_type: mean
   map_axis: 'x and y'
-  roi_belowGround: 0
-  roi_envelope: 0
+  roi_belowGround: 39
+  roi_envelope: 39
 
 FITTING ALGORITHM:
   type: direct
@@ -62,7 +62,7 @@ FITTING ALGORITHM:
     fit_rot: False
     fit_shift: False
     fit_tt_track: True
-    fit_lgs_track: False
+    fit_lgs_track: True
 
   l3s:
     fit_1_r0: True
