@@ -20,11 +20,15 @@ from capt.roi_functions.roi_zeroSep_locations import roi_zeroSep_locations
 from capt.matrix_functions.matrix_zeroSep_false import matrix_zeroSep_false
 from capt.covariance_generation.generate_covariance_roi import covariance_roi
 from capt.misc_functions.remove_tt_cents import remove_tt_cents, remove_tt_matrix
-from capt.roi_functions.calculate_roi_covariance import calculate_roi_covariance
 from capt.fitting_functions.covariance_fitting_algorithm import fitting_parameters
 from capt.misc_functions.mapping_matrix import get_mappingMatrix, covMap_superFast
 from capt.covariance_generation.generate_covariance_matrix import covariance_matrix
 from capt.covariance_generation.generate_covariance_roi_l3s import covariance_roi_l3s
+from capt.roi_functions.calculate_roi_covariance_orig import calculate_roi_covariance
+
+
+
+
 
 
 class configuration(object):
@@ -172,6 +176,7 @@ class turbulence_profiler(object):
         if self.mask=='circle':
             self.pupil_mask = make_pupil_mask(self.mask, self.n_subap, self.nx_subap[0], 
                 telescope_conf["obs_diam"], self.tel_diam)
+            self.n_subap_from_pupilMask = numpy.array([int(self.pupil_mask.sum())]*self.n_wfs)
 
 
         #target array parameters
@@ -212,7 +217,8 @@ class turbulence_profiler(object):
         #build matrix to remove tip-tilt for each shwfs
         self.remove_tt_matrix = None
         if self.remove_tt==True:
-            self.remove_tt_matrix = remove_tt_matrix(self.n_subap[0], self.n_wfs)
+            if self.mask=='circle':
+                self.remove_tt_matrix = remove_tt_matrix(self.n_subap[0], self.n_wfs)
         
         #direct fitting specifications
         if config_file.configDict["FITTING ALGORITHM"]["type"]=='direct':
@@ -338,15 +344,22 @@ class turbulence_profiler(object):
         
         
         if self.mask=='custom':
-            if numpy.array([input_pupilMask]).shape[0]==1:
-                raise Exception('Input pupil mask has not been set.')
+            if str(input_pupilMask)=='False':
+                raise Exception('Custom pupil mask has not been set.')
             if numpy.sum(input_pupilMask)==0:
-                raise Exception('Input pupil mask has zero sub-apertures.')
+                raise Exception('Custom pupil mask has zero sub-apertures.')
             
             self.pupil_mask = input_pupilMask
-            matrix_region_ones = numpy.ones((int(pupi_mask.ones()), int(self.pupil_mask.sum())))
+            self.n_subap_from_pupilMask = numpy.array([int(self.pupil_mask.sum())]*self.n_wfs)
+            matrix_region_ones = numpy.ones((self.n_subap_from_pupilMask[0], self.n_subap_from_pupilMask[0]))
             self.mm, self.mmc, self.md = get_mappingMatrix(self.pupil_mask, matrix_region_ones)
             self.mm_built = True
+            if self.l3s_fit==True:
+                self.l3s1_matrix = transform_matrix(self.n_subap_from_pupilMask, self.n_wfs)
+            if self.remove_tt==True:
+                self.remove_tt_matrix = remove_tt_matrix(self.n_subap_from_pupilMask[0], self.n_wfs)
+
+
 
         if self.zeroSep_cov==False:
             self.get_zeroSep_locations()
@@ -514,11 +527,11 @@ class turbulence_profiler(object):
 
         ######## L3S.2 ########
         if self.target_array=='Covariance Map ROI':
-            cov_meas_ground = cov_meas - self.make_covariance_roi(self.pupil_mask, self.air_mass, self.gs_pos, layer_alt_aloft[1:], 
+            cov_meas_ground = cov_meas - self.make_covariance_roi(self.pupil_mask, self.air_mass, self.gs_pos, self.gs_alt, layer_alt_aloft[1:], 
                 r0_aloft[1:], L0_aloft[1:], tt_track_aloft, lgs_track_aloft, self.shwfs_shift, self.shwfs_rot, tt_track_present=False, 
                 lgs_track_present=self.fit_1_lgs_track, offset_present=self.offset_present, fitting_L0=self.fitting_1_L0)
         else:
-            cov_meas_ground = cov_meas - self.make_covariance_matrix(self.pupil_mask, self.air_mass, self.gs_pos, layer_alt_aloft[1:], 
+            cov_meas_ground = cov_meas - self.make_covariance_matrix(self.pupil_mask, self.air_mass, self.gs_pos, self.gs_alt, layer_alt_aloft[1:], 
                 r0_aloft[1:], L0_aloft[1:], tt_track_aloft, lgs_track_aloft, self.shwfs_shift, self.shwfs_rot, 
                 target_array=self.target_array, tt_track_present=False, lgs_track_present=self.fit_1_lgs_track, 
                 offset_present=self.offset_present, fitting_L0=self.fitting_1_L0, matrix_xy=self.matrix_xy, 
@@ -573,12 +586,12 @@ class turbulence_profiler(object):
         if self.fit_3==False:
             if self.output_fitted_array==True:
                 if self.target_array=='Covariance Map ROI':
-                    self.cov_fit = self.make_covariance_roi(self.pupil_mask, self.air_mass, self.gs_pos, layer_alt*self.air_mass, 
+                    self.cov_fit = self.make_covariance_roi(self.pupil_mask, self.air_mass, self.gs_pos, self.gs_alt, layer_alt, 
                         r0, L0, self.tt_track, self.lgs_track, self.shwfs_shift, self.shwfs_rot, 
                         l3s1_transform=False, tt_track_present=self.tt_track_present, lgs_track_present=self.lgs_track_present, 
                         offset_present=self.offset_present, fitting_L0=True)
                 else:
-                    self.cov_fit = self.make_covariance_matrix(self.pupil_mask, self.air_mass, self.gs_pos, layer_alt*self.air_mass, 
+                    self.cov_fit = self.make_covariance_matrix(self.pupil_mask, self.air_mass, self.gs_pos, self.gs_alt, layer_alt*self.air_mass, 
                         r0, L0, self.tt_track, self.lgs_track, self.shwfs_shift, self.shwfs_rot, target_array=self.target_array, 
                         tt_track_present=self.tt_track_present, lgs_track_present=self.lgs_track_present, offset_present=self.offset_present, 
                         fitting_L0=True)
@@ -630,7 +643,7 @@ class turbulence_profiler(object):
                         roi_length_l3s3, self.map_axis, self.roi_belowGround_l3s3)
 
         else:
-            zeroSep_zeros = matrix_zeroSep_false(self.n_subap)
+            zeroSep_zeros = matrix_zeroSep_false(self.n_subap_from_pupilMask)
             self.zeroSep_locations = numpy.where(zeroSep_zeros==0)
             if self.l3s_fit==True:
                 if self.fit_3==True:
@@ -638,9 +651,11 @@ class turbulence_profiler(object):
             del zeroSep_zeros
         
 
+        
 
 
-    def make_covariance_matrix(self, pupil_mask, air_mass, gs_pos, layer_alt, r0, L0, tt_track, lgs_track, shwfs_shift, shwfs_rot, remove_tt=False, 
+
+    def make_covariance_matrix(self, pupil_mask, air_mass, gs_pos, gs_alt, layer_alt, r0, L0, tt_track, lgs_track, shwfs_shift, shwfs_rot, remove_tt=False, 
         l3s1_transform=False, target_array=False, tt_track_present=False, lgs_track_present=False, offset_present=False, fitting_L0=False, matrix_xy=True):
         """Analytically generate covariance matrix.
         
@@ -663,12 +678,13 @@ class turbulence_profiler(object):
         L0 = numpy.array(L0)
         shwfs_shift = numpy.array(shwfs_shift)
         shwfs_rot = numpy.array(shwfs_rot)
-        layer_alt = numpy.array(layer_alt)
+        gs_dist = numpy.array(gs_alt) * air_mass
+        layer_dist = numpy.array(layer_alt) * air_mass
         if gs_pos.shape[0]!=self.n_wfs:
             raise Exception("Check number of GSs vs. SHWFS parameters.")
 
         generationParams = covariance_matrix(pupil_mask, self.subap_diam, self.wavelength, 
-            self.tel_diam, self.n_subap, self.gs_alt, gs_pos, len(layer_alt), layer_alt*air_mass, 
+            self.tel_diam, self.n_subap, gs_dist, gs_pos, len(layer_alt), layer_dist, 
             r0, L0, styc_method=self.styc_method, wind_profiling=False, tt_track_present=tt_track_present, 
             lgs_track_present=lgs_track_present, offset_present=offset_present, fit_layer_alt=False, 
             fit_tt_track=False, fit_lgs_track=False, fit_offset=False, fit_L0=fitting_L0, 
@@ -676,20 +692,19 @@ class turbulence_profiler(object):
             l3s1_matrix=self.l3s1_matrix, remove_tt=remove_tt, remove_tt_matrix=self.remove_tt_matrix)
         self.timingStart = generationParams.timingStart
 
-        cov = generationParams._make_covariance_matrix_((layer_alt*air_mass).astype('float'), 
+        cov = generationParams._make_covariance_matrix_((layer_dist).astype('float'), 
             r0.astype('float'), L0.astype('float'), tt_track=tt_track, lgs_track=lgs_track, 
             shwfs_shift=shwfs_shift.astype('float'), shwfs_rot=shwfs_rot.astype('float'))
 
         if self.zeroSep_cov==False:
             cov[self.zeroSep_locations] = 0.
 
-        if self.mm_built==False:
-            matrix_region_ones = numpy.ones((int(pupil_mask.sum()), int(pupil_mask.sum())))
-            self.mm, self.mmc, self.md = get_mappingMatrix(pupil_mask, matrix_region_ones)
-            self.mm_built = True
-
-
         if target_array=='Covariance Map' or target_array=='Covariance Map ROI':
+            if self.mm_built==False:
+                matrix_region_ones = numpy.ones((int(pupil_mask.sum()), int(pupil_mask.sum())))
+                self.mm, self.mmc, self.md = get_mappingMatrix(pupil_mask, matrix_region_ones)
+                self.mm_built = True
+
             reduced_n_subap = int(pupil_mask.sum())
             self.n_subap_from_pupilMask = numpy.array([reduced_n_subap]*self.n_wfs)
             cov = covMap_fromMatrix(cov, self.n_wfs, self.nx_subap, self.n_subap_from_pupilMask, pupil_mask, 
@@ -708,7 +723,7 @@ class turbulence_profiler(object):
 
 
 
-    def make_covariance_roi(self, pupil_mask, air_mass, gs_pos, layer_alt, r0, L0, tt_track, lgs_track, shwfs_shift, shwfs_rot, l3s1_transform=False,
+    def make_covariance_roi(self, pupil_mask, air_mass, gs_pos, gs_alt, layer_alt, r0, L0, tt_track, lgs_track, shwfs_shift, shwfs_rot, l3s1_transform=False,
         tt_track_present=False, lgs_track_present=False, offset_present=False, fitting_L0=False):
         """Analytically generate covariance map ROI.
         
@@ -725,13 +740,14 @@ class turbulence_profiler(object):
             
         Returns:
             ndarray: covariance map ROI."""
-        
+
         r0 = numpy.array(r0)
         L0 = numpy.array(L0)
         gs_pos = numpy.array(gs_pos)
         shwfs_shift = numpy.array(shwfs_shift)
         shwfs_rot = numpy.array(shwfs_rot)
-        layer_alt = numpy.array(layer_alt)
+        gs_dist = numpy.array(gs_alt) * air_mass
+        layer_dist = numpy.array(layer_alt) * air_mass
         if gs_pos.shape[0]!=self.n_wfs:
             raise Exception("Check number of GSs vs. SHWFS parameters.")
 
@@ -740,12 +756,12 @@ class turbulence_profiler(object):
                 gs_pos, self.tel_diam, self.roi_belowGround, self.roi_envelope)
 
             generationParams = covariance_roi(pupil_mask, self.subap_diam, 
-                    self.wavelength, self.tel_diam, self.n_subap, self.gs_alt, gs_pos, layer_alt.shape[0], layer_alt*air_mass, 
+                    self.wavelength, self.tel_diam, self.n_subap, gs_dist, gs_pos, layer_alt.shape[0], layer_dist, 
                     L0, allMapPos, xy_separations, self.map_axis, styc_method=self.styc_method, wind_profiling=False, 
                     tt_track_present=tt_track_present, lgs_track_present=lgs_track_present,offset_present=offset_present, 
                     fit_layer_alt=False, fit_tt_track=False, fit_lgs_track=False, fit_offset=False, fit_L0=fitting_L0)
 
-            cov_roi = generationParams._make_covariance_roi_((layer_alt*air_mass).astype('float'), 
+            cov_roi = generationParams._make_covariance_roi_((layer_dist).astype('float'), 
                 r0.astype('float'), L0.astype('float'), tt_track=tt_track, lgs_track=lgs_track, 
                 shwfs_shift=shwfs_shift.astype('float'), shwfs_rot=shwfs_rot.astype('float'))
 
@@ -754,12 +770,12 @@ class turbulence_profiler(object):
                 pupil_mask, gs_pos, self.tel_diam, pupil_mask.shape[0]-1, self.roi_envelope)
             
             generationParams = covariance_roi_l3s(pupil_mask, self.subap_diam, self.wavelength, 
-                    self.tel_diam, self.n_subap, self.gs_alt, gs_pos, layer_alt.shape[0], layer_alt*air_mass, 
+                    self.tel_diam, self.n_subap, gs_dist, gs_pos, layer_alt.shape[0], layer_dist, 
                     L0, allMapPos_acrossMap, xy_separations_acrossMap, self.map_axis, self.roi_belowGround, 
                     self.roi_envelope, styc_method=self.styc_method, wind_profiling=False, lgs_track_present=lgs_track_present, 
                     offset_present=offset_present, fit_layer_alt=False, fit_lgs_track=False, fit_offset=False, fit_L0=fitting_L0)
 
-            cov_roi = generationParams._make_covariance_roi_l3s_((layer_alt*air_mass).astype('float'), 
+            cov_roi = generationParams._make_covariance_roi_l3s_((layer_dist).astype('float'), 
                 r0.astype('float'), L0.astype('float'), lgs_track=lgs_track, shwfs_shift=shwfs_shift.astype('float'), 
                 shwfs_rot=shwfs_rot.astype('float'))
 
@@ -800,7 +816,7 @@ class turbulence_profiler(object):
                 cov_aloft_meas[self.zeroSep_locations] = 0.
 
         if self.target_array=='Covariance Matrix (No XY)':
-            xx_yy_locations = track_matrix(2*self.n_subap[0]*self.n_wfs, self.n_subap[0], 
+            xx_yy_locations = track_matrix(2*self.n_subap_from_pupilMask[0]*self.n_wfs, self.n_subap_from_pupilMask[0], 
                 numpy.array((1,1)))
             cov_meas[xx_yy_locations==0] = 0.
             if self.l3s_fit==True:
@@ -808,12 +824,13 @@ class turbulence_profiler(object):
 
         cov_meas_l3s3 = numpy.nan
         if self.target_array=='Covariance Map' or self.target_array=='Covariance Map ROI':
-            cov_meas = covMap_fromMatrix(cov_meas, self.n_wfs, self.nx_subap, self.n_subap, 
+            cov_meas = covMap_fromMatrix(cov_meas, self.n_wfs, self.nx_subap, self.n_subap_from_pupilMask, 
                 self.pupil_mask, self.map_axis, self.mm, self.mmc, self.md)
             if self.l3s_fit==True:
                 cov_aloft_meas = covMap_fromMatrix(cov_aloft_meas, self.n_wfs, self.nx_subap, 
-                    self.n_subap, self.pupil_mask, self.map_axis, self.mm, self.mmc, self.md)
+                    self.n_subap_from_pupilMask, self.pupil_mask, self.map_axis, self.mm, self.mmc, self.md)
             
+            # stop
             if self.target_array=='Covariance Map ROI':
                 cov_map = cov_meas.copy()
 
@@ -1011,7 +1028,8 @@ class turbulence_profiler(object):
         self.shwfs_centroids = numpy.nan
         self.air_mass = float(air_mass)
         self.gs_pos = tas.astype('float')
-        self.gs_alt *= self.air_mass
+        self.gs_dist = self.gs_alt.copy() * self.air_mass
+
         if self.gs_pos.shape[0]!=self.n_wfs:
             raise Exception("Check number of GSs vs SHWFS parameters.")
         
@@ -1030,30 +1048,31 @@ class turbulence_profiler(object):
         # print('Range of Maximum Observable Altitudes (km):')
         print('\n'+'###########################################################','\n')
         print('######################## h_max (km) #######################','\n')
-        self.observable_bins = self.n_layer		
+
         self.min_alt, self.max_alt = calc_hmax(self.pupil_mask, self.n_subap, self.gs_pos, self.tel_diam, self.air_mass)
 
         #if force_altRange==True, only fit layers below h_max
-        if self.force_altRange == True:
-            if self.gs_alt[0]==0:
-                for i in range(self.n_layer):
-                    if self.layer_alt[i]!=0:
-                        if (self.max_alt/self.layer_alt[i]) < 1:
-                            self.observable_bins = i
-                            break
-            else:
-                #account for lgs cone effect
-                gs_alt_zen = self.gs_alt[0].copy() / air_mass
-                self.max_alt = (self.max_alt*gs_alt_zen)/(self.max_alt+gs_alt_zen)
-                for i in range(self.n_layer):
-                    if self.layer_alt[i]!=0:
-                        if (self.max_alt/self.layer_alt[i]) < 1:
-                            self.observable_bins = i
-                            break
+        # if self.force_altRange == True:
+        if self.gs_dist[0]==0:
+            for i in range(self.n_layer):
+                if self.layer_alt[i]!=0:
+                    if (self.max_alt/self.layer_alt[i]) < 1:
+                        self.observable_bins = i
+                        break
+        else:
+            #account for lgs cone effect
+            gs_alt_zen = self.gs_dist[0].copy() / air_mass
+            self.max_alt = (self.max_alt*gs_alt_zen)/(self.max_alt+gs_alt_zen)
+            for i in range(self.n_layer):
+                if self.layer_alt[i]!=0:
+                    if (self.max_alt/self.layer_alt[i]) < 1:
+                        self.observable_bins = i
+                        break
+        
+        if self.force_altRange==False:
+            self.observable_bins = self.n_layer		
 
         print('#################### '+"%6.4f" % (self.min_alt/1000.)+' -> '+"%6.4f" % (self.max_alt/1000.)+' ###################')
-
-
 
         if self.target_array=='Covariance Map ROI':
             #These imported tools are the key to calculating the covariance map ROI and its 

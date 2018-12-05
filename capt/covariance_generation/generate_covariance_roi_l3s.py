@@ -4,10 +4,10 @@ import math
 import itertools
 from scipy.special import comb
 from matplotlib import pyplot; pyplot.ion()
+import capt.misc_functions.matplotlib_format 
 from capt.misc_functions.make_pupil_mask import make_pupil_mask
 from capt.misc_functions.mapping_matrix import get_mappingMatrix
 from capt.roi_functions.roi_referenceArrays import roi_referenceArrays
-
 
 class covariance_roi_l3s(object):
 		
@@ -185,6 +185,7 @@ class covariance_roi_l3s(object):
 				self.computeButt(L0)    
 			self.fixedLayerParameters()
 
+		# stopinside
 
 
 
@@ -986,10 +987,10 @@ if __name__ == "__main__":
 	gs_pos = numpy.array([[0.,-20.], [0.,20.], [20., 0.]])
 	# gs_pos = numpy.array([[0.,-20.], [0.,20.]])
 	wavelength = numpy.array([500e-9]*n_wfs)
-	n_layer = 1
-	layer_alt = numpy.array([9282])
+	n_layer = 2
+	layer_alt = numpy.array([0, 9282])
 	fit_L0 = False
-	r0 = numpy.array([0.1]*n_layer)
+	r0 = numpy.array([0.2]*n_layer)
 	L0 = numpy.array([25.]*n_layer)
 	shwfs_shift = numpy.array(([0,0],[0,0], [0,0]))
 	shwfs_rot = numpy.array([0,0, 0])
@@ -1011,12 +1012,64 @@ if __name__ == "__main__":
 	delta_ySep = numpy.array([1.2])
 
 	"""CANARY"""
-	tel_diam = 4.2
-	obs_diam = 1.0
-	subap_diam = numpy.array([0.6]*n_wfs)
-	n_subap = numpy.array([36]*n_wfs)
-	nx_subap = numpy.array([7]*n_wfs)
+	# tel_diam = 4.2
+	# obs_diam = 1.0
+	# subap_diam = numpy.array([0.6]*n_wfs)
+	# n_subap = numpy.array([36]*n_wfs)
+	# nx_subap = numpy.array([7]*n_wfs)
 
+
+	# pupil_mask = make_pupil_mask('circle', n_subap, nx_subap[0], obs_diam, tel_diam)
+	# matrix_region_ones = numpy.ones((n_subap[0], n_subap[0]))
+	# mm, mmc, md = get_mappingMatrix(pupil_mask, matrix_region_ones)
+	# onesMat, wfsMat_1, wfsMat_2, allMapPos_acrossMap, selector, xy_separations_acrossMap = roi_referenceArrays(pupil_mask, 
+	# 	gs_pos, tel_diam, pupil_mask.shape[0]-1, roi_envelope)
+
+	# params = covariance_roi_l3s(pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, 
+	# 	gs_pos, n_layer, layer_alt, L0, allMapPos_acrossMap, xy_separations_acrossMap, 
+	# 	roi_axis, roi_belowGround, roi_envelope, styc_method=True, wind_profiling=True, 
+	# 	lgs_track_present=False, offset_present=False, fit_layer_alt=False, 
+	# 	fit_lgs_track=False, fit_offset=False, fit_L0=False)
+
+	# # (self, pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, gs_pos, allMapPos_acrossMap, xy_separations_acrossMap, 
+	# #     n_layer, layer_alt, wind_profiling, offset_present, roi_belowGround, roi_envelope, fit_offset, fit_L0, L0, roi_axis, styc_method):
+
+	# s = time.time()
+	# cov_roi = params._make_covariance_roi_l3s_(layer_alt, r0, L0, lgs_track=lgs_track, shwfs_shift=shwfs_shift, 
+	# 	shwfs_rot=shwfs_rot, delta_xSep=delta_xSep, delta_ySep=delta_ySep)
+	# f = time.time()
+	# print('Time Taken: {}'.format(f-s))
+
+	# pyplot.figure()
+	# pyplot.imshow(cov_roi)
+
+
+
+	"""AOF"""
+	n_wfs = 2
+	tel_diam = 8.2
+	obs_diam = 1.1
+	subap_diam = numpy.array([0.205]*n_wfs)
+	n_subap = numpy.array([1240]*n_wfs)
+	nx_subap = numpy.array([40]*n_wfs)
+	wavelength = numpy.array([589e-9]*n_wfs)
+	gs_pos = numpy.array([[-64.,0.], [64.,0.]])
+	
+	# n_layer = 29
+	# gs_alt = numpy.array([95000.]*n_wfs)*1.0919539999999999
+	# layer_alt = numpy.array([0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500, 13000, 13500, 14000])*1.0919539999999999
+
+	n_layer = 2
+	layer_alt = numpy.array([0, 8000])*1.0919539999999999
+
+	gs_alt = numpy.array([95000.]*n_wfs)*1.0919539999999999
+	fit_L0 = False
+	r0 = numpy.array([0.2, 0.2])
+	# r0 = numpy.array([0.2]*n_layer)
+	L0 = numpy.array([25.]*n_layer)
+	roi_envelope = 1
+	roi_belowGround = 1
+	roi_axis = 'x and y'
 
 	pupil_mask = make_pupil_mask('circle', n_subap, nx_subap[0], obs_diam, tel_diam)
 	matrix_region_ones = numpy.ones((n_subap[0], n_subap[0]))
@@ -1024,24 +1077,11 @@ if __name__ == "__main__":
 	onesMat, wfsMat_1, wfsMat_2, allMapPos_acrossMap, selector, xy_separations_acrossMap = roi_referenceArrays(pupil_mask, 
 		gs_pos, tel_diam, pupil_mask.shape[0]-1, roi_envelope)
 
-
-# (self, pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, gs_pos, 
-# 			n_layer, layer_alt, L0, allMapPos_acrossMap, xy_separations_acrossMap, roi_axis, 
-# 			roi_belowGround, roi_envelope, styc_method=True, wind_profiling=False, 
-# 			lgs_track_present=False, offset_present=False, fit_layer_alt=False, 
-# 			fit_lgs_track=False, fit_offset=False, fit_L0=False)
-
-
-
-
 	params = covariance_roi_l3s(pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, 
 		gs_pos, n_layer, layer_alt, L0, allMapPos_acrossMap, xy_separations_acrossMap, 
-		roi_axis, roi_belowGround, roi_envelope, styc_method=True, wind_profiling=True, 
+		roi_axis, roi_belowGround, roi_envelope, styc_method=True, wind_profiling=False, 
 		lgs_track_present=False, offset_present=False, fit_layer_alt=False, 
 		fit_lgs_track=False, fit_offset=False, fit_L0=False)
-
-	# (self, pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, gs_pos, allMapPos_acrossMap, xy_separations_acrossMap, 
-	#     n_layer, layer_alt, wind_profiling, offset_present, roi_belowGround, roi_envelope, fit_offset, fit_L0, L0, roi_axis, styc_method):
 
 	s = time.time()
 	cov_roi = params._make_covariance_roi_l3s_(layer_alt, r0, L0, lgs_track=lgs_track, shwfs_shift=shwfs_shift, 

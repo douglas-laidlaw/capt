@@ -136,7 +136,7 @@ class covariance_matrix(object):
 			self.auto_xy_separations = numpy.array((xloc_mapOnes, yloc_mapOnes)).T
 
 		if huge_matrix==True:
-			print('THIS MATRIX BE HUUUUGGGEEEE')
+			print('\n'+'THIS MATRIX BE HUUUUGGGEEEE')
 			self.huge_matrix = True
 		else:
 			self.huge_matrix = False
@@ -412,18 +412,18 @@ class covariance_matrix(object):
 						self.cov_mat[cov_mat_coord_x1: cov_mat_coord_x2, cov_mat_coord_y1: 
 							cov_mat_coord_y2] = cov_xx * r0_scale
 
-						self.cov_mat[cov_mat_coord_x1 + self.n_subap[wfs_i]: cov_mat_coord_x2 + 
-							self.n_subap[wfs_i], cov_mat_coord_y1 + self.n_subap[wfs_j]: 
-							cov_mat_coord_y2 + self.n_subap[wfs_j]] = cov_yy * r0_scale
+						self.cov_mat[cov_mat_coord_x1 + self.n_subap_from_pupilMask: cov_mat_coord_x2 + 
+							self.n_subap_from_pupilMask, cov_mat_coord_y1 + self.n_subap_from_pupilMask: 
+							cov_mat_coord_y2 + self.n_subap_from_pupilMask] = cov_yy * r0_scale
 
 						if self.matrix_xy==True:
-							self.cov_mat[cov_mat_coord_x1 + self.n_subap[wfs_i]: cov_mat_coord_x2 + 
-								self.n_subap[wfs_i], cov_mat_coord_y1: 
+							self.cov_mat[cov_mat_coord_x1 + self.n_subap_from_pupilMask: cov_mat_coord_x2 + 
+								self.n_subap_from_pupilMask, cov_mat_coord_y1: 
 								cov_mat_coord_y2] = cov_xy * r0_scale
 							
 							self.cov_mat[cov_mat_coord_x1: cov_mat_coord_x2, cov_mat_coord_y1 + 
-								self.n_subap[wfs_j]: cov_mat_coord_y2 + 
-								self.n_subap[wfs_j]] = cov_xy * r0_scale
+								self.n_subap_from_pupilMask: cov_mat_coord_y2 + 
+								self.n_subap_from_pupilMask] = cov_xy * r0_scale
 
 			if self.huge_matrix==True:
 				self.covariance_matrix += mirror_covariance_matrix(self.cov_mat, self.n_subap, self.n_subap_from_pupilMask)

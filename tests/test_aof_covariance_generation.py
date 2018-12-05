@@ -37,7 +37,7 @@ if __name__ == '__main__':
     air_mass = 1.
     pix_arc = numpy.nan
     shwfs_centroids = numpy.nan
-    canary_tas = numpy.array([(0, -60), (0., 60.)])
+    canary_tas = numpy.array([(-64, 0), (64., 0.)])
     configuration = capt.configuration('../conf/aof_example_conf.yaml')
 
     matrix, roi = generate_covariance(
@@ -48,10 +48,10 @@ if __name__ == '__main__':
 
     # roi = numpy.hstack((numpy.rot90(roi[:,:79],1), numpy.rot90(roi[:,79:],1)))
 
-    pyplot.figure('diff')
-    diff = matrix-roi
-    diff[diff==0] = numpy.nan
-    pyplot.imshow(diff)
+    # pyplot.figure('diff')
+    # diff = matrix-roi
+    # diff[diff==0] = numpy.nan
+    # pyplot.imshow(diff)
 
     pyplot.figure('matrix')
     matrix[matrix==0] = numpy.nan

@@ -1,4 +1,3 @@
-
 import time
 import numpy
 import itertools
@@ -16,7 +15,7 @@ from capt.misc_functions.mapping_matrix import get_mappingMatrix, covMap_superFa
 
 
 def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm, sa_mm, sb_mm, selector, roi_axis, mapping_type):
-    """Takes SHWFS centroids and directly calculates the covariance map ROI (doesn't require going via covariance matrix).
+    """Takes SHWFS centroids and directly calculates the covariance map ROI (does not require going via covariance matrix).
     
     Parameters:
         shwfs_centroids (ndarray): SHWFS centroid measurements.
@@ -38,7 +37,6 @@ def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm,
 
     #subtracts mean at each sub-aperture axis (first step in calculating cross-covariance).
     shwfs_centroids = (shwfs_centroids - shwfs_centroids.mean(0)).T
-    # print(time.time() - timeStart)
 
     if roi_axis=='x' or roi_axis=='y' or roi_axis=='x+y':
         roi_covariance = numpy.zeros((allMapPos.shape[0]*allMapPos.shape[1], allMapPos.shape[2]))
@@ -46,22 +44,25 @@ def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm,
         roi_covariance = numpy.zeros((allMapPos.shape[0]*allMapPos.shape[1], allMapPos.shape[2]*2))
 
     allMapPos[allMapPos==2*covMapDim] = 0
-    aamm = allMapPos[:, :, :, 1] + allMapPos[:, :, :, 0] * covMapDim
+    allMapPos = allMapPos[:, :, :, 1] + allMapPos[:, :, :, 0] * covMapDim
 
     wfs1_n_subap = n_subap[0]
     wfs2_n_subap = n_subap[0]
 
+    av_mm = numpy.zeros(mm.shape)
+    cov_mm = numpy.zeros(mm.shape)
+
+
     for i in range(allMapPos.shape[0]):
         
-        am = aamm[i]
-        loc = (mm[:, am.flatten()]==1)
-        subapsWfs1 = sa_mm[:, am.flatten()][loc]
-        subapsWfs2 = sb_mm[:, am.flatten()][loc]
+        loc = (mm[:, allMapPos[i].flatten()]==1)
+        where_loc = numpy.where(loc==1)
+        subapsWfs1 = sa_mm[:, allMapPos[i].flatten()][loc]
+        subapsWfs2 = sb_mm[:, allMapPos[i].flatten()][loc]
 
         #create roi to perform averaging
-        av = numpy.zeros(loc.shape)
-        av[loc] = 1
-        av =  numpy.sum(av, 0).reshape(allMapPos.shape[1], allMapPos.shape[2])
+        av_mm[loc] = 1
+        av = numpy.sum(av_mm, 0).reshape(allMapPos.shape[1], allMapPos.shape[2])
         av[av==0] = 1.
 
         #calculated xx covariance
@@ -69,33 +70,39 @@ def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm,
             #Convert from sub-aperture no. to x-slope no. within the respective WFSs
             subapsXX1 = subapsWfs1 + (selector[i][0]*2*wfs1_n_subap)
             subapsXX2 = subapsWfs2 + (selector[i][1]*2*wfs2_n_subap)
-            #covariance calculation
-            meanXX = ((shwfs_centroids[subapsXX1] * shwfs_centroids[subapsXX2]).sum(1)/(shwfs_centroids.shape[1]-1))
 
-            #fill mapping matrix roi with covariance values before reshaping and then averaging 
-            xx_mm = numpy.zeros(loc.shape)
-            xx_mm[loc] = meanXX
+            st = time.time()
+            stepSize = 5000
+            for j in range(loc.sum()):
+                cov_mm[where_loc[0][j*stepSize: (j+1)*stepSize], where_loc[1][j*stepSize: (j+1)*stepSize]] = ((shwfs_centroids[subapsXX1[j*stepSize: (j+1)*stepSize]] * shwfs_centroids[subapsXX2[j*stepSize: (j+1)*stepSize]]).sum(1)/(shwfs_centroids.shape[1]-1))
+                print(j*stepSize)
+            print('for time: {}'.format(time.time() - st))
+            stop
+            #covariance calculation and fill mapping matrix roi with covariance values before reshaping and then averaging 
+            cov_mm[loc] = ((shwfs_centroids[subapsXX1] * shwfs_centroids[subapsXX2]).sum(1)/(shwfs_centroids.shape[1]-1))
             if mapping_type!='mean':
                 raise Exception('Mapping Type not known.')
             else:
-                roi_cov_xx = numpy.sum(xx_mm, 0).reshape(allMapPos.shape[1], allMapPos.shape[2])/av
+                roi_cov_xx = numpy.sum(cov_mm, 0).reshape(allMapPos.shape[1], allMapPos.shape[2])/av
+                cov_mm *= 0
+                stop
 
         #calculated yy covariance
         if roi_axis!='x':
             #Convert from sub-aperture no. to y-slope no. within the respective WFSs
             subapsYY1 = subapsWfs1 + (selector[i][0]*2*wfs1_n_subap) + wfs1_n_subap
             subapsYY2 = subapsWfs2 + (selector[i][1]*2*wfs2_n_subap) + wfs2_n_subap
-            #covariance calculation
-            meanYY = ((shwfs_centroids[subapsYY1] * shwfs_centroids[subapsYY2]).sum(1)/(shwfs_centroids.shape[1]-1))
 
-            yy_mm = numpy.zeros(loc.shape)
-            yy_mm[loc] = meanYY
+            cov_mm[loc] = ((shwfs_centroids[subapsYY1] * shwfs_centroids[subapsYY2]).sum(1)/(shwfs_centroids.shape[1]-1))
 
-            #fill mapping matrix roi with covariance values before reshaping and then averaging 
+            #covariance calculation and fill mapping matrix roi with covariance values before reshaping and then averaging 
             if mapping_type!='mean':
                 raise Exception('Mapping Type not known.')
             else:
-                roi_cov_yy = numpy.sum(yy_mm, 0).reshape(allMapPos.shape[1], allMapPos.shape[2])/av
+                roi_cov_yy = numpy.sum(cov_mm, 0).reshape(allMapPos.shape[1], allMapPos.shape[2])/av
+                cov_mm *= 0
+
+        av_mm *= 0
 
         if roi_axis=='x':
             roi_covariance[i*allMapPos.shape[1]:(i+1)*allMapPos.shape[1]] = roi_cov_xx
@@ -105,6 +112,9 @@ def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm,
             roi_covariance[i*allMapPos.shape[1]:(i+1)*allMapPos.shape[1]] = (roi_cov_xx+roi_cov_yy)/2.
         if roi_axis=='x and y':
             roi_covariance[i*allMapPos.shape[1]:(i+1)*allMapPos.shape[1]] = numpy.hstack((roi_cov_xx, roi_cov_yy))
+
+        stop
+
 
     timeStop = time.time()
     time_taken = timeStop - timeStart
@@ -131,7 +141,8 @@ if __name__=='__main__':
     onesMat, wfsMat_1, wfsMat_2, allMapPos, selector, xy_separations = roi_referenceArrays(
                 pupil_mask, gs_pos, tel_diam, roi_belowGround, roi_envelope)
     
-    shwfs_centroids = fits.getdata('../../../../windProfiling/wind_paper/canary/data/test_fits/canary_noNoise_it10k_nl3_h0a10a20km_r00p1_L025_ws10a15a20_wd260a80a350_infScrn_wss448_gsPos0cn40a0c0a30c0.fits')
+    # shwfs_centroids = fits.getdata('../../../../windProfiling/wind_paper/canary/data/test_fits/canary_noNoise_it10k_nl3_h0a10a20km_r00p1_L025_ws10a15a20_wd260a80a350_infScrn_wss448_gsPos0cn40a0c0a30c0.fits')
+    shwfs_centroids = numpy.ones((10000, 36*2*3))
     covMapDim = 13
     roi_axis = 'x and y'
     mapping_type = 'mean'

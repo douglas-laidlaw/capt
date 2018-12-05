@@ -25,6 +25,10 @@ def calc_hmax(pupil_mask, n_subap, gs_pos, tel_diam, air_mass):
 		float: maximum GS asterism h_max."""
 
 	nx_subap = pupil_mask.shape[0]
+	real_nx_subap = numpy.where(pupil_mask.sum(1)>0)[0].shape[0]
+
+	real_tel_diam = tel_diam * (real_nx_subap/nx_subap) 
+
 	w = tel_diam/nx_subap
 	# grid = numpy.ones((n_subap[0], n_subap[0]))
 	# mm, mmc, md = get_mappingMatrix(pupil_mask, grid)
@@ -49,13 +53,15 @@ def calc_hmax(pupil_mask, n_subap, gs_pos, tel_diam, air_mass):
 		sep = numpy.sqrt(numpy.sum(sep_sq))
 		sep *= (1/3600.) * (numpy.pi/180.)
 
-		maxObsAlt = (tel_diam)/sep
+		maxObsAlt = (real_tel_diam-w)/sep
 		maxObsAlt /= air_mass
 
 		if maxObsAlt>maxAlt:
 			maxAlt = maxObsAlt
 		if maxObsAlt<minAlt:
 			minAlt = maxObsAlt
+
+	# stop
 
 	return minAlt, maxAlt
 
