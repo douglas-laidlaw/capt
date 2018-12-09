@@ -20,7 +20,7 @@ class covariance_roi(object):
 
 		Parameters:
 			pupil_mask (ndarray): mask of SHWFS sub-apertures within the telescope's pupil.
-			subap_diam (ndarray): diameter of SHWFS sub-aperture in telescope's pupil.
+			subap_diam (ndarray): diameter of SHWFS sub-aperture in telescope pupil.
 			wavelength (ndarray): SHWFS centroid wavelengh (nm).
 			wavelength (ndarray): SHWFS centroid wavelengh (nm).
 			tel_diam (float): diameter of telescope pupil.

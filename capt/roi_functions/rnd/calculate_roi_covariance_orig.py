@@ -140,8 +140,8 @@ if __name__=='__main__':
     n_wfs = 3
     gs_pos = numpy.array(([0,-40], [0, 0], [30,0]))
     tel_diam = 4.2
-    roi_belowGround = 6
-    roi_envelope = 6
+    roi_belowGround = 2
+    roi_envelope = 4
     nx_subap = numpy.array([7]*n_wfs)
     n_subap = numpy.array([36]*n_wfs)
 
@@ -157,3 +157,4 @@ if __name__=='__main__':
     mapping_type = 'mean'
 
     r, t = calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, onesMat, wfsMat_1, wfsMat_2, selector, roi_axis, mapping_type)
+    print('Time taken: {}'.format(t))

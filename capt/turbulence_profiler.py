@@ -19,12 +19,12 @@ from capt.roi_functions.roi_referenceArrays import roi_referenceArrays
 from capt.roi_functions.roi_zeroSep_locations import roi_zeroSep_locations
 from capt.matrix_functions.matrix_zeroSep_false import matrix_zeroSep_false
 from capt.covariance_generation.generate_covariance_roi import covariance_roi
+from capt.roi_functions.calculate_roi_covariance import calculate_roi_covariance
 from capt.misc_functions.remove_tt_cents import remove_tt_cents, remove_tt_matrix
 from capt.fitting_functions.covariance_fitting_algorithm import fitting_parameters
 from capt.misc_functions.mapping_matrix import get_mappingMatrix, covMap_superFast
 from capt.covariance_generation.generate_covariance_matrix import covariance_matrix
 from capt.covariance_generation.generate_covariance_roi_l3s import covariance_roi_l3s
-from capt.roi_functions.calculate_roi_covariance_orig import calculate_roi_covariance
 
 
 
@@ -932,18 +932,18 @@ class turbulence_profiler(object):
         
         begin_time = time.time()
         if self.remove_tt==False:
-            cov_roi, calc_time = calculate_roi_covariance(self.shwfs_centroids, self.allMapPos, 
-                (2*self.nx_subap[0])-1, self.n_subap, self.onesMat, self.wfsMat_1, self.wfsMat_2, 
-                self.selector, self.map_axis, self.mapping_type)
+            cov_roi, calc_time = calculate_roi_covariance(self.shwfs_centroids, 
+                self.gs_pos, self.pupil_mask, self.tel_diam, self.roi_belowGround, 
+                self.roi_envelope, self.map_axis, self.mapping_type)
             print('################ COVARIANCE ROI CALCULATED ################','\n')
             print('################### TIME TAKEN : '+"%6.4f" % (calc_time)+' ###################','\n')
 
         if self.remove_tt==True:
             shwfs_cents_removedTT = numpy.matmul(numpy.matmul(self.remove_tt_matrix, 
                 self.shwfs_centroids.T).T, self.remove_tt_matrix.T)
-            cov_roi, calc_time = calculate_roi_covariance(shwfs_cents_removedTT, self.allMapPos, 
-                (2*self.nx_subap[0])-1, self.n_subap, self.onesMat, self.wfsMat_1, self.wfsMat_2, 
-                self.selector, self.map_axis, self.mapping_type)
+            cov_roi, calc_time = calculate_roi_covariance(shwfs_cents_removedTT, 
+                self.gs_pos, self.pupil_mask, self.tel_diam, self.roi_belowGround, 
+                self.roi_envelope, self.map_axis, self.mapping_type)
             print('########## NO TT COVARIANCE ROI CALCULATED ##########','\n')
             print('################### TIME TAKEN : '+"%6.4f" % (calc_time)+' ###################')
 
@@ -953,27 +953,27 @@ class turbulence_profiler(object):
             if self.remove_tt==True:
                 shwfs_cents_aloft = numpy.matmul(numpy.matmul(self.l3s1_matrix, 
                     shwfs_cents_removedTT.T).T, self.l3s1_matrix.T)
-                cov_roi_aloft, calc_time = calculate_roi_covariance(shwfs_cents_removedTT, self.allMapPos, 
-                    (2*self.nx_subap[0])-1, self.n_subap, self.onesMat, self.wfsMat_1, self.wfsMat_2, 
-                    self.selector, self.map_axis, self.mapping_type)
+                cov_roi_aloft, calc_time = calculate_roi_covariance(shwfs_cents_aloft, 
+                    self.gs_pos, self.pupil_mask, self.tel_diam, self.roi_belowGround, 
+                    self.roi_envelope, self.map_axis, self.mapping_type)
             else:
                 shwfs_cents_aloft = numpy.matmul(numpy.matmul(self.l3s1_matrix, 
                     self.shwfs_centroids.T).T, self.l3s1_matrix.T)
-                cov_roi_aloft, calc_time = calculate_roi_covariance(shwfs_cents_aloft, self.allMapPos, 
-                    (2*self.nx_subap[0])-1, self.n_subap, self.onesMat, self.wfsMat_1, self.wfsMat_2, 
-                    self.selector, self.map_axis, self.mapping_type)
+                cov_roi_aloft, calc_time = calculate_roi_covariance(shwfs_cents_aloft, 
+                    self.gs_pos, self.pupil_mask, self.tel_diam, self.roi_belowGround, 
+                    self.roi_envelope, self.map_axis, self.mapping_type)
             print('############# L3S.1 COVARIANCE ROI CALCULATED #############','\n')
             print('################### TIME TAKEN : '+"%6.4f" % (calc_time)+' ###################', '\n')
 
             if self.fit_3==True:
                 if self.remove_tt==True:
-                    cov_roi_l3s3, calc_time2 = calculate_roi_covariance(shwfs_cents_removedTT, self.allMapPos_l3s3, 
-                        (2*self.nx_subap[0])-1, self.n_subap, self.onesMat_l3s3, self.wfsMat_1_l3s3, self.wfsMat_2_l3s3, 
-                        self.selector, self.map_axis, self.mapping_type)
+                    cov_roi_l3s3, calc_time2 = calculate_roi_covariance(shwfs_cents_removedTT, 
+                        self.gs_pos, self.pupil_mask, self.tel_diam, self.roi_belowGround_l3s3, 
+                        self.roi_envelope_l3s3, self.map_axis, self.mapping_type)
                 else:
-                    cov_roi_l3s3, calc_time2 = calculate_roi_covariance(self.shwfs_centroids, self.allMapPos_l3s3, 
-                        (2*self.nx_subap[0])-1, self.n_subap, self.onesMat_l3s3, self.wfsMat_1_l3s3, self.wfsMat_2_l3s3, 
-                        self.selector, self.map_axis, self.mapping_type)
+                    cov_roi_l3s3, calc_time2 = calculate_roi_covariance(self.shwfs_centroids, 
+                        self.gs_pos, self.pupil_mask, self.tel_diam, self.roi_belowGround_l3s3, 
+                        self.roi_envelope_l3s3, self.map_axis, self.mapping_type)
                 print('############# L3S.3 COVARIANCE ROI CALCULATED #############','\n')
                 print('################### TIME TAKEN : '+"%6.4f" % (calc_time)+' ###################', '\n')
 
@@ -1037,9 +1037,9 @@ class turbulence_profiler(object):
             self.gs_pos *= self.plate_scale
         
         if self.input_matrix==False:
-            self.shwfs_centroids = numpy.zeros((shwfs_centroids.shape[0], 2 * numpy.sum(self.n_subap)))
+            self.shwfs_centroids = numpy.zeros((shwfs_centroids.shape[0], 2 * numpy.sum(self.n_subap_from_pupilMask)))
             for wfs_n in range(self.n_wfs):
-                step = int(2*self.n_subap[wfs_n])
+                step = int(2*self.n_subap_from_pupilMask[wfs_n])
                 self.shwfs_centroids[:, (wfs_n*step):((wfs_n+1)*step)] =  shwfs_centroids[:, 
                     (wfs_n*step)+self.cent_start:((wfs_n+1)*step)+self.cent_start] * self.pix_arc[wfs_n]
 
@@ -1049,6 +1049,7 @@ class turbulence_profiler(object):
         print('\n'+'###########################################################','\n')
         print('######################## h_max (km) #######################','\n')
 
+        self.observable_bins = self.n_layer		
         self.min_alt, self.max_alt = calc_hmax(self.pupil_mask, self.n_subap, self.gs_pos, self.tel_diam, self.air_mass)
 
         #if force_altRange==True, only fit layers below h_max

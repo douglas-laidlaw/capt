@@ -36,11 +36,11 @@ TARGET ARRAY:
   covariance_map_roi: True
   tt_track_present: False
   tt_track: [0., 0.]
-  zeroSep_cov: False
+  zeroSep_cov: True
   mapping_type: mean
   map_axis: 'x and y'
-  roi_belowGround: 0
-  roi_envelope: 0
+  roi_belowGround: 6
+  roi_envelope: 6
 
 FITTING ALGORITHM:
   type: l3s

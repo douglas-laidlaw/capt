@@ -34,6 +34,7 @@ def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm,
         roi_covariance (ndarray): covariance map ROI.
         time_taken (float): time taken to complete calculation."""
 
+
     timeStart = time.time()
 
     #subtracts mean at each sub-aperture axis (first step in calculating cross-covariance).
@@ -75,6 +76,7 @@ def calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, mm,
             #fill mapping matrix roi with covariance values before reshaping and then averaging 
             xx_mm = numpy.zeros(loc.shape)
             xx_mm[loc] = meanXX
+
             if mapping_type!='mean':
                 raise Exception('Mapping Type not known.')
             else:
@@ -120,8 +122,8 @@ if __name__=='__main__':
     n_wfs = 3
     gs_pos = numpy.array(([0,-40], [0, 0], [30,0]))
     tel_diam = 4.2
-    roi_belowGround = 6
-    roi_envelope = 6
+    roi_belowGround = 2
+    roi_envelope = 4
     nx_subap = numpy.array([7]*n_wfs)
     n_subap = numpy.array([36]*n_wfs)
 
@@ -136,4 +138,6 @@ if __name__=='__main__':
     roi_axis = 'x and y'
     mapping_type = 'mean'
 
-    nr, nt = calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, onesMat, wfsMat_1, wfsMat_2, selector, roi_axis, mapping_type)
+    sr, st = calculate_roi_covariance(shwfs_centroids, allMapPos, covMapDim, n_subap, onesMat, wfsMat_1, wfsMat_2, selector, roi_axis, mapping_type)
+
+    print('Time taken: {}'.format(st))
