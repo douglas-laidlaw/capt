@@ -322,7 +322,7 @@ class fitting_parameters(object):
         lgs_track = lgs_track.copy().reshape(2*self.gs_combs)
         for i, val in enumerate(lgs_track):
             if val==None:
-                lgs_track[i] = covSliceParams[np]
+                lgs_track[i] = -numpy.abs(covSliceParams[np])
                 np+=1
         lgs_track.resize(self.gs_combs, 2)
 
@@ -375,7 +375,7 @@ class fitting_parameters(object):
             print("Iteration:", self.count)
             print("Target Array:", self.target_array)
             print("Method:", self.method)
-            print("Layer Altitudes:", layer_alt)
+            print("Layer Distance:", layer_alt)
             print("L0:", L0)
             print("TT Track:", tt_track)
             if self.using_lgs==True:
