@@ -5,7 +5,6 @@ import itertools
 from scipy.misc import comb
 from matplotlib import pyplot; pyplot.ion()
 from capt.misc_functions.cross_cov import cross_cov
-from capt.misc_functions.calc_hmax import calc_hmax
 from capt.fixed_telescope_arrays import grab_fixed_array
 from capt.roi_functions.roi_from_map import roi_from_map
 from capt.roi_functions.roi_from_map import roi_from_map
@@ -16,6 +15,7 @@ from capt.misc_functions.transform_matrix import transform_matrix
 from capt.map_functions.covMap_fromMatrix import covMap_fromMatrix
 from capt.misc_functions.dasp_cents_reshape import dasp_cents_reshape
 from capt.roi_functions.roi_referenceArrays import roi_referenceArrays
+from capt.misc_functions.calc_hmax_NGSandLGS import calc_hmax_NGSandLGS
 from capt.roi_functions.roi_zeroSep_locations import roi_zeroSep_locations
 from capt.matrix_functions.matrix_zeroSep_false import matrix_zeroSep_false
 from capt.covariance_generation.generate_covariance_roi import covariance_roi
@@ -240,6 +240,8 @@ class turbulence_profiler(object):
                 self.fitting_L0 = True
             if self.fit_rot==True or self.fit_shift==True:
                 self.fit_offset=True
+            if self.fit_tt_track==True:
+                self.tt_track_present = True
             self.lgs_track_present = False
             if self.fit_lgs_track==True:
                 self.lgs_track_present = True
@@ -1050,7 +1052,7 @@ class turbulence_profiler(object):
         print('######################## h_max (km) #######################','\n')
 
         self.observable_bins = self.n_layer		
-        self.min_alt, self.max_alt = calc_hmax(self.pupil_mask, self.n_subap, self.gs_pos, self.tel_diam, self.air_mass)
+        self.min_alt, self.max_alt = calc_hmax_NGSandLGS(self.pupil_mask, self.n_subap, self.gs_pos, self.gs_dist, self.tel_diam, self.air_mass)
 
         #if force_altRange==True, only fit layers below h_max
         # if self.force_altRange == True:
@@ -1062,8 +1064,8 @@ class turbulence_profiler(object):
                         break
         else:
             #account for lgs cone effect
-            gs_alt_zen = self.gs_dist[0].copy() / air_mass
-            self.max_alt = (self.max_alt*gs_alt_zen)/(self.max_alt+gs_alt_zen)
+            # gs_alt_zen = self.gs_dist[0].copy() / air_mass
+            # self.max_alt = (self.max_alt*gs_alt_zen)/(self.max_alt+gs_alt_zen)
             for i in range(self.n_layer):
                 if self.layer_alt[i]!=0:
                     if (self.max_alt/self.layer_alt[i]) < 1:
