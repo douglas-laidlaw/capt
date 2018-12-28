@@ -322,7 +322,7 @@ class fitting_parameters(object):
         lgs_track = lgs_track.copy().reshape(2*self.gs_combs)
         for i, val in enumerate(lgs_track):
             if val==None:
-                lgs_track[i] = numpy.abs(covSliceParams[np])
+                lgs_track[i] = covSliceParams[np]
                 np+=1
         lgs_track.resize(self.gs_combs, 2)
 
@@ -338,6 +338,9 @@ class fitting_parameters(object):
             if val==None:
                 shwfs_rot[i] = covSliceParams[np]
                 np+=1
+
+        if self.method=='Direct Fit':
+            lgs_track = numpy.abs(lgs_track)
 
         if self.target_array=='Covariance Map ROI':
             
