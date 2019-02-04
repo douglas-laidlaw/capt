@@ -88,10 +88,10 @@ class covariance_roi(object):
 		if separate_layers==True:
 			#generate arrays to be filled with analytically generated covariance
 			if self.roi_axis!='y':
-				self.cov_xx = numpy.zeros((self.combs, self.roi_width, self.roi_length, n_layer)).astype('float64')
+				self.cov_xx = numpy.zeros((n_layer, self.combs, self.roi_width, self.roi_length)).astype('float64')
 			#generate arrays to be filled with analytically generated covariance
 			if self.roi_axis!='x':
-				self.cov_yy = numpy.zeros((self.combs, self.roi_width, self.roi_length, n_layer)).astype('float64')
+				self.cov_yy = numpy.zeros((n_layer, self.combs, self.roi_width, self.roi_length)).astype('float64')
 		else:
 			#generate arrays to be filled with analytically generated covariance
 			if self.roi_axis!='y':
@@ -131,10 +131,10 @@ class covariance_roi(object):
 
 		#compile covariance ROIs
 		if self.roi_axis=='x' or self.roi_axis=='y' or self.roi_axis=='x+y':
-			self.covariance_slice_fixed = numpy.zeros((self.combs*self.roi_width, self.roi_length, n_layer)).astype('float64')
+			self.covariance_slice_fixed = numpy.zeros((self.n_layer, self.combs*self.roi_width, self.roi_length)).astype('float64')
 		
 		if self.roi_axis=='x and y':
-			self.covariance_slice_fixed = numpy.zeros((self.combs*self.roi_width, self.roi_length*2, n_layer)).astype('float64')
+			self.covariance_slice_fixed = numpy.zeros((self.n_layer, self.combs*self.roi_width, self.roi_length*2)).astype('float64')
 
 		self.timingStart = time.time()
 
@@ -196,7 +196,7 @@ class covariance_roi(object):
 
 					self.offset_set=True
 
-		covariance_slice = (self.covariance_slice_fixed * (L0/r0)**(5./3.)).sum(2)
+		covariance_slice = ((self.covariance_slice_fixed.T[:,:] * (L0/r0)**(5./3.)).T).sum(0)
 		covariance_slice *= self.radSqaured_to_arcsecSqaured
 
 		if self.tt_track_present==True or self.fit_tt_track==True:
@@ -272,27 +272,28 @@ class covariance_roi(object):
 	def subap_parameters(self, layer_alt):
 		"""Calculate initial parameters that are fixed i.e. translation of sub-aperture positions with altitude."""
 
-		for wfs_n in range(2):
-			for comb in range(self.combs):
+		for layer_n in range(self.n_layer):
+			for wfs_n in range(2):
+				for comb in range(self.combs):
 
-				gs_pos = self.gs_pos[self.selector[comb, wfs_n]]
-				# layer_altitude = layer_alt
+					gs_pos = self.gs_pos[self.selector[comb, wfs_n]]
+					layer_altitude = layer_alt[layer_n]
 
-				# Scale for LGS
-				if self.gs_alt[self.selector[comb, wfs_n]] != 0:
-					# print("Its an LGS!")
-					self.scale_factor[:, comb] = (1 - layer_alt/self.gs_alt[self.selector[comb,wfs_n]])
-				else:
-					self.scale_factor[:, comb] = 1.
+					# Scale for LGS
+					if self.gs_alt[self.selector[comb, wfs_n]] != 0:
+						# print("Its an LGS!")
+						self.scale_factor[layer_n, comb] = (1 - layer_altitude/self.gs_alt[self.selector[comb,wfs_n]])
+					else:
+						self.scale_factor[layer_n, comb] = 1.
 
-				# translate due to GS position
-				gs_pos_rad = numpy.array(gs_pos) * (numpy.pi/180.) * (1./3600.)
+					# translate due to GS position
+					gs_pos_rad = numpy.array(gs_pos) * (numpy.pi/180.) * (1./3600.)
 
-				# print("GS Positions: {} rad".format(gs_pos_rad))
-				self.translation[:, wfs_n, comb] = gs_pos_rad
-				self.subap_layer_diameters[:, wfs_n, comb] = self.subap_diam[self.selector[comb, wfs_n]] * self.scale_factor[:, comb]
+					# print("GS Positions: {} rad".format(gs_pos_rad))
+					self.translation[layer_n, wfs_n, comb] = gs_pos_rad * layer_altitude
+					self.subap_layer_diameters[layer_n, wfs_n, comb] = self.subap_diam[self.selector[comb, wfs_n]] * self.scale_factor[layer_n, comb]
+		# stop
 
-		self.translation = (self.translation.T * layer_alt).T
 
 
 
@@ -314,7 +315,7 @@ class covariance_roi(object):
 		yPosMM[onesMM==0] = numpy.nan
 		ySeps = numpy.ones((self.combs, self.roi_width, self.roi_length, self.nx_subap**2)) * numpy.nan
 		xSeps = numpy.ones((self.combs, self.roi_width, self.roi_length, self.nx_subap**2)) * numpy.nan
-		self.meanDenominator = numpy.zeros(self.cov_xx[...,0].shape)
+		self.meanDenominator = numpy.zeros(self.cov_xx[0].shape)
 		self.subap_sep_positions = numpy.ones((self.combs, self.roi_width, self.roi_length, self.nx_subap**2, 2))
 		self.allMapPos[self.allMapPos>=covMapDim] = 0.
 
@@ -337,8 +338,6 @@ class covariance_roi(object):
 		# stop
 		# self.meanDenominator[0] = mapDensity
 		self.meanDenominator[self.meanDenominator==0] = 1.
-		self.meanDenominator = numpy.stack([self.meanDenominator]*self.n_layer, 3)
-
 
 
 
@@ -373,52 +372,48 @@ class covariance_roi(object):
 
 
 
-
-
 	def fixedLayerParameters(self):
 		"""Creates covariance map ROI matrix where each combination/layer is fixed such that, if only r0 is being 
 		fitted, the 2D response function is generated once whereafter its shape is iteratively multiplied."""
 
 		self.covariance_slice_fixed *= 0.
-	
-		for comb in range(self.combs):
 
-			# print("covmat coords: ({}: {}, {}: {})".format(cov_mat_coord_x1, cov_mat_coord_x2, cov_mat_coord_y1, cov_mat_coord_y2))
-			r0_scale1 = ((self.wavelength[self.selector[comb,0]] * self.wavelength[self.selector[comb,1]])
-					/ (8 * numpy.pi**2 * self.subap_diam[self.selector[comb, 0]] * self.subap_diam[self.selector[comb, 1]] ))
+		for layer_n in range(self.n_layer):
 
-			if self.roi_axis=='x+y':
-				cov_xx = self.cov_xx[comb]
-				cov_yy = self.cov_yy[comb]
+			for comb in range(self.combs):
 
-				self.covariance_slice_fixed[comb*self.roi_width: 
-					(comb+1)*self.roi_width] += ((cov_xx+cov_yy)*(r0_scale1/2.))
+				# print("covmat coords: ({}: {}, {}: {})".format(cov_mat_coord_x1, cov_mat_coord_x2, cov_mat_coord_y1, cov_mat_coord_y2))
+				r0_scale1 = ((self.wavelength[self.selector[comb,0]] * self.wavelength[self.selector[comb,1]])
+						/ (8 * numpy.pi**2 * self.subap_diam[self.selector[comb, 0]] * self.subap_diam[self.selector[comb, 1]] ))
 
+				if self.roi_axis=='x+y':
+					cov_xx = self.cov_xx[layer_n, comb]
+					cov_yy = self.cov_yy[layer_n, comb]
 
-			if self.roi_axis=='x':
-				cov_xx = self.cov_xx[comb]
-
-				self.covariance_slice_fixed[comb*self.roi_width: 
-					(comb+1)*self.roi_width] += cov_xx*r0_scale1
+					self.covariance_slice_fixed[layer_n, comb*self.roi_width: 
+						(comb+1)*self.roi_width] += ((cov_xx+cov_yy)*(r0_scale1/2.))
 
 
-			if self.roi_axis=='y':
-				cov_yy = self.cov_yy[comb]
+				if self.roi_axis=='x':
+					cov_xx = self.cov_xx[layer_n, comb]
 
-				self.covariance_slice_fixed[comb*self.roi_width: 
-					(comb+1)*self.roi_width] += cov_yy*r0_scale1
-			
-
-			if self.roi_axis=='x and y':
-				cov_xx = self.cov_xx[comb]
-				cov_yy = self.cov_yy[comb]
-
-				self.covariance_slice_fixed[comb*self.roi_width: 
-					(comb+1)*self.roi_width] += numpy.hstack(((cov_xx*r0_scale1), (cov_yy*r0_scale1)))
+					self.covariance_slice_fixed[layer_n, comb*self.roi_width: 
+						(comb+1)*self.roi_width] += cov_xx*r0_scale1
 
 
+				if self.roi_axis=='y':
+					cov_yy = self.cov_yy[layer_n, comb]
 
+					self.covariance_slice_fixed[layer_n, comb*self.roi_width: 
+						(comb+1)*self.roi_width] += cov_yy*r0_scale1
+				
 
+				if self.roi_axis=='x and y':
+					cov_xx = self.cov_xx[layer_n, comb]
+					cov_yy = self.cov_yy[layer_n, comb]
+
+					self.covariance_slice_fixed[layer_n, comb*self.roi_width: 
+						(comb+1)*self.roi_width] += numpy.hstack(((cov_xx*r0_scale1), (cov_yy*r0_scale1)))
 
 
 
@@ -428,39 +423,32 @@ class covariance_roi(object):
 		Parameters:
 			L0 (ndarray): L0 profile (m)."""
 
-		for comb in range(self.combs):
-
-			if self.offset_present==True or self.fit_offset==True:
-				#stack xy separations for n_layer and multiple by lgs scale factor
-				xy_seps = numpy.stack([self.xy_separations[comb]]*self.n_layer, 3)
-				xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
+		for layer_n in range(self.n_layer):
+			for comb in range(self.combs):
 				
-				if self.wind_profiling==True:
-					xy_seps[:,:,:,:,0] += self.delta_xSep
-					xy_seps[:,:,:,:,1] += self.delta_ySep			
-			
-			if self.offset_present==False and self.fit_offset==False:
-				#stack xy separations for n_layer and multiple by lgs scale factor
-				xy_seps = numpy.stack([self.xy_separations[comb]]*self.n_layer, 2)
-				xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
+				if self.seperate_layers==True:
+					xy_seps = self.xy_separations[comb].copy() * self.scale_factor[layer_n, comb]
+				else:
+					xy_seps = self.xy_separations[comb].copy() * self.scale_factor[layer_n, comb]
 
 				if self.wind_profiling==True:
-					xy_seps[:,:,:,0] += self.delta_xSep
-					xy_seps[:,:,:,1] += self.delta_ySep
+					if self.offset_present==True or self.fit_offset==True:
+						xy_seps[:,:,:,0] += self.delta_xSep[layer_n]
+						xy_seps[:,:,:,1] += self.delta_ySep[layer_n]
+					if self.offset_present==False and self.fit_offset==False:
+						xy_seps[:,:,0] += self.delta_xSep[layer_n]
+						xy_seps[:,:,1] += self.delta_ySep[layer_n]
 
 
-			if self.roi_axis!='y':
-				self.cov_xx[comb] = compute_covariance_xx(xy_seps, 
-					self.subap_layer_diameters[:, 0, comb], L0, self.translation[:, 0, comb], 
-					self.translation[:, 1, comb], self.compute_cov_offset)/self.meanDenominator[comb]
+				if self.roi_axis!='y':
+					self.cov_xx[layer_n, comb] = compute_covariance_xx(xy_seps, 
+						self.subap_layer_diameters[layer_n, 0, comb], L0[layer_n], self.translation[layer_n, 0, comb], 
+						self.translation[layer_n, 1, comb], self.compute_cov_offset)/self.meanDenominator[comb]
 
-			if self.roi_axis!='x':
-				self.cov_yy[comb] = compute_covariance_yy(xy_seps, 
-					self.subap_layer_diameters[:, 0, comb], L0, self.translation[:, 0, comb], 
-					self.translation[:, 1, comb], self.compute_cov_offset)/self.meanDenominator[comb]
-
-
-
+				if self.roi_axis!='x':
+					self.cov_yy[layer_n, comb] = compute_covariance_yy(xy_seps, 
+						self.subap_layer_diameters[layer_n, 0, comb], L0[layer_n], self.translation[layer_n, 0, comb], 
+						self.translation[layer_n, 1, comb], self.compute_cov_offset)/self.meanDenominator[comb]
 
 
 
@@ -645,7 +633,7 @@ def compute_covariance_xx(separation, subap1_diam, L0, trans_wfs1, trans_wfs2, o
 		ndarray: xx spatial covariance"""
 
 
-	separation = (separation + (trans_wfs2 - trans_wfs1)).astype('float64')
+	separation = separation + (trans_wfs2 - trans_wfs1)
 	nan_store = (numpy.isnan(separation[...,1])==True)
 
 	x1 = separation[...,1] + (subap1_diam - subap1_diam) * 0.5
@@ -691,7 +679,7 @@ def compute_covariance_yy(separation, subap1_diam, L0, trans_wfs1, trans_wfs2, o
     Returns:
         ndarray: yy spatial covariance"""    
 
-    separation = (separation + (trans_wfs2 - trans_wfs1)).astype('float64')
+    separation = separation + (trans_wfs2 - trans_wfs1)
     nan_store = (numpy.isnan(separation[...,0])==True)
 
     y1 = separation[...,0] + (subap1_diam - subap1_diam) * 0.5
@@ -871,8 +859,6 @@ def macdo_x56(x):
 
 
 
-
-
 if __name__ == "__main__":
 	n_wfs = 3
 	gs_alt = numpy.array([90000]*n_wfs)
@@ -886,10 +872,10 @@ if __name__ == "__main__":
 	r0 = numpy.array([0.1]*n_layer)
 	L0 = numpy.array([25.]*n_layer)
 	shwfs_shift = numpy.array(([0,0],[0,0],[0,0]))
-	shwfs_rot = numpy.array([0,0,0])
+	shwfs_rot = numpy.array([0,5,0])
 	roi_envelope = 6
 	roi_belowGround = 6
-	roi_axis = 'x+y'
+	roi_axis = 'x and y'
 	styc_method = True
 	fit_tt_track = False
 	tt_track_present = False
@@ -902,22 +888,22 @@ if __name__ == "__main__":
 	fit_offset = False
 	offset_present = True
 
-	delta_xSep = numpy.array([0, 0, 0, 0])
-	delta_ySep = numpy.array([0, 0, 0, 0])
+	delta_xSep = numpy.array([0, 2, 3, 0])
+	delta_ySep = numpy.array([0, 4, 1, 0])
 
-	"""CANARY"""
-	tel_diam = 4.2
-	obs_diam = 1.0
-	subap_diam = numpy.array([0.6]*n_wfs)
-	n_subap = numpy.array([36]*n_wfs)
-	nx_subap = numpy.array([7]*n_wfs)
+	# """CANARY"""
+	# tel_diam = 4.2
+	# obs_diam = 1.0
+	# subap_diam = numpy.array([0.6]*n_wfs)
+	# n_subap = numpy.array([36]*n_wfs)
+	# nx_subap = numpy.array([7]*n_wfs)
 
-	# """AOF"""
-	# tel_diam = 8.2
-	# obs_diam = 0.94
-	# subap_diam = numpy.array([0.205]*n_wfs)
-	# n_subap = numpy.array([1248]*n_wfs)
-	# nx_subap = numpy.array([40]*n_wfs)
+	"""AOF"""
+	tel_diam = 8.2
+	obs_diam = 0.94
+	subap_diam = numpy.array([0.205]*n_wfs)
+	n_subap = numpy.array([1248]*n_wfs)
+	nx_subap = numpy.array([40]*n_wfs)
 
 	# """HARMONI"""
 	# tel_diam = 39.0

@@ -430,21 +430,23 @@ class covariance_roi(object):
 
 		for comb in range(self.combs):
 
-			if self.offset_present==True or self.fit_offset==True:
-				#stack xy separations for n_layer and multiple by lgs scale factor
-				xy_seps = numpy.stack([self.xy_separations[comb]]*self.n_layer, 3)
-				xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
-				
-				if self.wind_profiling==True:
-					xy_seps[:,:,:,:,0] += self.delta_xSep
-					xy_seps[:,:,:,:,1] += self.delta_ySep			
-			
-			if self.offset_present==False and self.fit_offset==False:
-				#stack xy separations for n_layer and multiple by lgs scale factor
-				xy_seps = numpy.stack([self.xy_separations[comb]]*self.n_layer, 2)
-				xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
+			if self.wind_profiling==True:
 
-				if self.wind_profiling==True:
+				if self.offset_present==True or self.fit_offset==True:
+					#stack xy separations for n_layer and multiple by lgs scale factor
+					xy_seps = numpy.stack([self.xy_separations[comb]]*self.n_layer, 3)
+					xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
+					
+					xy_seps[:,:,:,:,0] += self.delta_xSep
+					xy_seps[:,:,:,:,1] += self.delta_ySep
+
+				
+				
+				if self.offset_present==False and self.fit_offset==False:
+					#stack xy separations for n_layer and multiple by lgs scale factor
+					xy_seps = numpy.stack([self.xy_separations[comb]]*self.n_layer, 2)
+					xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
+
 					xy_seps[:,:,:,0] += self.delta_xSep
 					xy_seps[:,:,:,1] += self.delta_ySep
 
@@ -886,10 +888,10 @@ if __name__ == "__main__":
 	r0 = numpy.array([0.1]*n_layer)
 	L0 = numpy.array([25.]*n_layer)
 	shwfs_shift = numpy.array(([0,0],[0,0],[0,0]))
-	shwfs_rot = numpy.array([0,0,0])
+	shwfs_rot = numpy.array([0,5,0])
 	roi_envelope = 6
 	roi_belowGround = 6
-	roi_axis = 'x+y'
+	roi_axis = 'x and y'
 	styc_method = True
 	fit_tt_track = False
 	tt_track_present = False
@@ -902,8 +904,8 @@ if __name__ == "__main__":
 	fit_offset = False
 	offset_present = True
 
-	delta_xSep = numpy.array([0, 0, 0, 0])
-	delta_ySep = numpy.array([0, 0, 0, 0])
+	delta_xSep = numpy.array([0, 2, 3, 0])
+	delta_ySep = numpy.array([0, 4, 1, 0])
 
 	"""CANARY"""
 	tel_diam = 4.2
@@ -911,6 +913,7 @@ if __name__ == "__main__":
 	subap_diam = numpy.array([0.6]*n_wfs)
 	n_subap = numpy.array([36]*n_wfs)
 	nx_subap = numpy.array([7]*n_wfs)
+
 
 	# """AOF"""
 	# tel_diam = 8.2
@@ -937,7 +940,7 @@ if __name__ == "__main__":
 	
 	params = covariance_roi(pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, 
 		gs_pos, n_layer, layer_alt, L0, allMapPos, xy_separations, roi_axis, styc_method=True, 
-		tt_track_present=True, lgs_track_present=False, offset_present=False, fit_layer_alt=True, 
+		tt_track_present=True, lgs_track_present=False, offset_present=True, fit_layer_alt=True, 
 		fit_tt_track=False, fit_lgs_track=False, fit_offset=False, fit_L0=False, wind_profiling=True)
 	
 	
