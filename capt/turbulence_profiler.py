@@ -561,6 +561,7 @@ class turbulence_profiler(object):
         self.l3s2_time = l3s_2_1_time + l3s_2_1_time
 
         r0 = numpy.append(r0_ground, r0_aloft[1:n_layer_aloft])
+        Cn2 = calc_Cn2(r0, self.wavelength[0])/self.air_mass
         L0 = numpy.append(L0_ground, L0_aloft[1:n_layer_aloft])
         self.lgs_track = lgs_track_aloft + lgs_track_ground
         layer_alt = numpy.append(layer_alt_ground, layer_alt_aloft[1:n_layer_aloft])
@@ -570,16 +571,22 @@ class turbulence_profiler(object):
 
         ######## L3S. 3 ########
         if self.fit_3==True:
+            
+            layer_alt3 = layer_alt[Cn2>self.cn2_noiseFloor]
+            r03 = r0[Cn2>self.cn2_noiseFloor]
+            L03 = L0[Cn2>self.cn2_noiseFloor]
+            n_layer3 = layer_alt3.shape[0]
+
             if self.covariance_map_roi==True:
                 cov_meas = cov_meas_l3s3
 
-            params = fitting_parameters(self, 'Direct Fit', self.target_array, n_layer, layer_alt*self.air_mass, 
+            params = fitting_parameters(self, 'Direct Fit', self.target_array, n_layer3, layer_alt3*self.air_mass, 
                 self.tt_track_present, self.lgs_track_present, self.offset_present, False, self.fit_3_tt_track, self.fit_3_lgs_track, 
-                self.fit_3_offset, self.fitting_3_L0, L0, r0, self.roi_belowGround_l3s3, self.roi_envelope_l3s3, self.zeroSep_locations_l3s3, 
+                self.fit_3_offset, self.fitting_3_L0, L03, r03, self.roi_belowGround_l3s3, self.roi_envelope_l3s3, self.zeroSep_locations_l3s3, 
                 self.allMapPos_l3s3, self.xy_separations_l3s3)
             print('###################### FITTING L3S.3 ######################','\n')
-            success, r0, L0, self.tt_track, self.lgs_track, self.shwfs_rot, self.shwfs_shift, self.cov_fit, its_l3s3, start_l3s3 = params.covariance_fit(
-                    self, cov_meas, layer_alt*self.air_mass, r0, L0, self.tt_track, self.lgs_track, self.shwfs_shift, self.shwfs_rot, 
+            success, r03, L03, self.tt_track, self.lgs_track, self.shwfs_rot, self.shwfs_shift, self.cov_fit, its_l3s3, start_l3s3 = params.covariance_fit(
+                    self, cov_meas, layer_alt3*self.air_mass, r03, L03, self.tt_track, self.lgs_track, self.shwfs_shift, self.shwfs_rot, 
                     fit_r0=self.fit_3_r0, fit_L0=self.fit_3_L0, fit_tt_track=self.fit_3_tt_track, fit_lgs_track=self.fit_3_lgs_track, 
                     fit_shift=self.fit_3_shift, fit_rot=self.fit_3_rot, fit_globalL0=self.fit_3_globalL0, fit_groundL0=self.fit_3_groundL0)
             finish_l3s3 = time.time()
@@ -614,7 +621,7 @@ class turbulence_profiler(object):
 
         print('###########################################################','\n')
         print('##################### L3S FIT COMPLETE ####################','\n')
-        print('################## FITTING SUCCESS :', success, '#################','\n')
+        print('################## FITTING SUCCESS : '+str(success==True)+' #################','\n')
         print('################ TIME TAKEN L3S.1 : '+"%6.4f" % self.l3s1_time+' ################','\n')
         print('################ TIME TAKEN L3S.2 : '+"%6.4f" % self.l3s2_time+' ################','\n')
         print('################ TIME TAKEN L3S.3 : '+"%6.4f" % self.l3s3_time+' ################')
@@ -1075,7 +1082,7 @@ class turbulence_profiler(object):
         if self.force_altRange==False:
             self.observable_bins = self.n_layer		
 
-        print('#################### '+"%6.4f" % (self.min_alt/1000.)+' -> '+"%6.4f" % (self.max_alt/1000.)+' ###################')
+        print('###################### '+"%.3f" % (self.min_alt/1000.)+' -> '+"%.3f" % (self.max_alt/1000.)+' ####################')
 
         if self.target_array=='Covariance Map ROI':
             #These imported tools are the key to calculating the covariance map ROI and its 
