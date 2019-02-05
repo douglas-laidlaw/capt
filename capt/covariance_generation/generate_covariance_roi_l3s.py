@@ -753,23 +753,22 @@ def compute_covariance_xx(separation, subap1_rad, subap2_rad, trans, L0, offset_
     separation = (separation + trans).astype('float64')
     nan_store = (numpy.isnan(separation[..., 1])==True)
 
-    y1 = separation[..., 1] + (subap2_rad - subap1_rad)
-    r1 = numpy.array(numpy.sqrt(separation[..., 0]**2 + y1**2))
+    # y1 = separation[..., 1] + (subap2_rad - subap1_rad)
+    # r1 = numpy.array(numpy.sqrt(separation[..., 0]**2 + y1**2))
 
-    y2 = separation[..., 1] - (subap2_rad + subap1_rad)
-    r2 = numpy.array(numpy.sqrt(separation[..., 0]**2 + y2**2))
+    # y2 = separation[..., 1] - (subap2_rad + subap1_rad)
+    # r2 = numpy.array(numpy.sqrt(separation[..., 0]**2 + y2**2))
 
-    y3 = separation[..., 1] + (subap2_rad + subap1_rad)
-    r3 = numpy.array(numpy.sqrt(separation[..., 0]**2 + y3**2))
+    # y3 = separation[..., 1] + (subap2_rad + subap1_rad)
+    # r3 = numpy.array(numpy.sqrt(separation[..., 0]**2 + y3**2))
 
-    # y4 = separation[..., 1] - (subap2_rad - subap1_rad)
-    # r4 = numpy.sqrt(separation[..., 0]**2 + y4**2)
+    # cov_xx = (- 2 * structure_function_vk(r1, L0)
+    #        + structure_function_vk(r2, L0)
+    #        + structure_function_vk(r3, L0))
 
-    cov_xx = (- 2 * structure_function_vk(r1, L0)
-           + structure_function_vk(r2, L0)
-           + structure_function_vk(r3, L0))
-        #    - structure_function_vk(r4, L0)
-
+    cov_xx = (- 2 * structure_function_vk(numpy.array(numpy.sqrt(separation[..., 0]**2 + (separation[..., 1] + (subap2_rad - subap1_rad))**2)), L0)
+           + structure_function_vk(numpy.array(numpy.sqrt(separation[..., 0]**2 + (separation[..., 1] - (subap2_rad + subap1_rad))**2)), L0)
+           + structure_function_vk(numpy.array(numpy.sqrt(separation[..., 0]**2 + (separation[..., 1] + (subap2_rad + subap1_rad))**2)), L0))
 
     cov_xx[nan_store] = 0.
 
@@ -803,22 +802,22 @@ def compute_covariance_yy(separation, subap1_rad, subap2_rad, trans, L0, offset_
     separation = (separation + trans).astype('float64')
     nan_store = (numpy.isnan(separation[..., 0])==True)
 
-    x1 = separation[..., 0] + (subap2_rad - subap1_rad)
-    r1 = numpy.array(numpy.sqrt(x1**2 + separation[..., 1]**2))
+    # x1 = separation[..., 0] + (subap2_rad - subap1_rad)
+    # r1 = numpy.array(numpy.sqrt(x1**2 + separation[..., 1]**2))
 
-    x2 = separation[..., 0] - (subap2_rad + subap1_rad)
-    r2 = numpy.array(numpy.sqrt(x2**2 + separation[..., 1]**2))
+    # x2 = separation[..., 0] - (subap2_rad + subap1_rad)
+    # r2 = numpy.array(numpy.sqrt(x2**2 + separation[..., 1]**2))
 
-    x3 = separation[..., 0] + (subap2_rad + subap1_rad)
-    r3 = numpy.array(numpy.sqrt(x3**2 + separation[..., 1]**2))
+    # x3 = separation[..., 0] + (subap2_rad + subap1_rad)
+    # r3 = numpy.array(numpy.sqrt(x3**2 + separation[..., 1]**2))
 
-    # x4 = separation[..., 0] - (subap2_rad - subap1_rad)
-    # r4 = numpy.sqrt(x4**2 + separation[..., 1]**2)
+    # cov_yy = (- 2 * structure_function_vk(r1, L0)
+    #         + structure_function_vk(r2, L0)
+    #         + structure_function_vk(r3, L0))
 
-    cov_yy = (- 2 * structure_function_vk(r1, L0)
-            + structure_function_vk(r2, L0)
-            + structure_function_vk(r3, L0))
-            # - structure_function_vk(r4, L0)
+    cov_yy = (- 2 * structure_function_vk(numpy.array(numpy.sqrt((separation[..., 0] + (subap2_rad - subap1_rad))**2 + separation[..., 1]**2)), L0)
+            + structure_function_vk(numpy.array(numpy.sqrt((separation[..., 0] - (subap2_rad + subap1_rad))**2 + separation[..., 1]**2)), L0)
+            + structure_function_vk(numpy.array(numpy.sqrt((separation[..., 0] + (subap2_rad + subap1_rad))**2 + separation[..., 1]**2)), L0))
 
     cov_yy[nan_store] = 0.
 
@@ -902,63 +901,66 @@ def asymp_macdo(x):
 
 
 def macdo_x56(x):
-    """Computation of the function f(x) = x^(5/6)*K_{5/6}(x) using a series for the esimation of K_{5/6}, taken from Rod Conan thesis: 
-    K_a(x)=1/2 \sum_{n=0}^\infty \frac{(-1)^n}{n!}\left(\Gamma(-n-a) (x/2)^{2n+a} + \Gamma(-n+a) (x/2)^{2n-a} \right), with a = 5/6.
+	"""Computation of the function f(x) = x^(5/6)*K_{5/6}(x) using a series for the esimation of K_{5/6}, taken from Rod Conan thesis: 
+	K_a(x)=1/2 \sum_{n=0}^\infty \frac{(-1)^n}{n!}\left(\Gamma(-n-a) (x/2)^{2n+a} + \Gamma(-n+a) (x/2)^{2n-a} \right), with a = 5/6.
 
-    Setting x22 = (x/2)^2, setting uda = (1/2)^a, and multiplying by x^a, this becomes: 
-    x^a * Ka(x) = 0.5 $ -1^n / n! [ G(-n-a).uda x22^(n+a) + G(-n+a)/uda x22^n ] 
-    Then we use the following recurrence formulae on the following quantities:
-    G(-(n+1)-a) = G(-n-a) / -a-n-1
-    G(-(n+1)+a) = G(-n+a) /  a-n-1
-    (n+1)! = n! * (n+1)
-    x22^(n+1) = x22^n * x22
-    
-    At each iteration on n, one will use the values already computed at step (n-1). For efficiency, the values of G(a) and G(-a) 
-    are hardcoded instead of being computed. The first term of the series has also been skipped, as it vanishes with another term in 
-    the expression of Dphi.
+	Setting x22 = (x/2)^2, setting uda = (1/2)^a, and multiplying by x^a, this becomes: 
+	x^a * Ka(x) = 0.5 $ -1^n / n! [ G(-n-a).uda x22^(n+a) + G(-n+a)/uda x22^n ] 
+	Then we use the following recurrence formulae on the following quantities:
+	G(-(n+1)-a) = G(-n-a) / -a-n-1
+	G(-(n+1)+a) = G(-n+a) /  a-n-1
+	(n+1)! = n! * (n+1)
+	x22^(n+1) = x22^n * x22
 
-    Parameters:
-        x (ndarray): (2*numpy.pi/L0)*separation > 4.71239
+	At each iteration on n, one will use the values already computed at step (n-1). For efficiency, the values of G(a) and G(-a) 
+	are hardcoded instead of being computed. The first term of the series has also been skipped, as it vanishes with another term in 
+	the expression of Dphi.
 
-    Returns:
-        ndarray: spatial covariance."""
+	Parameters:
+		x (ndarray): (2*numpy.pi/L0)*separation > 4.71239
 
-    a = 5./6
-    x2a = x**(2.*a)
-    x22 = x * x/4.
+	Returns:
+		ndarray: spatial covariance."""
+
+	a = 5./6
+	x2a = x**(2.*a)
+	x22 = x * x/4.
 
 
-    Ga = [
-        0, 12.067619015983075, 5.17183672113560444,
-        0.795667187867016068,
-        0.0628158306210802181, 0.00301515986981185091,
-        9.72632216068338833e-05, 2.25320204494595251e-06,
-        3.93000356676612095e-08, 5.34694362825451923e-10,
-        5.83302941264329804e-12,
-        ]
+	Ga = [
+		0, 12.067619015983075, 5.17183672113560444,
+		0.795667187867016068,
+		0.0628158306210802181, 0.00301515986981185091,
+		9.72632216068338833e-05, 2.25320204494595251e-06,
+		3.93000356676612095e-08, 5.34694362825451923e-10,
+		5.83302941264329804e-12,
+		]
 
-    Gma = [ -3.74878707653729304, -2.04479295083852408,
-        -0.360845814853857083, -0.0313778969438136685,
-        -0.001622994669507603, -5.56455315259749673e-05,
-        -1.35720808599938951e-06, -2.47515152461894642e-08,
-        -3.50257291219662472e-10, -3.95770950530691961e-12,
-        -3.65327031259100284e-14
-    ]
+	Gma = [ -3.74878707653729304, -2.04479295083852408,
+		-0.360845814853857083, -0.0313778969438136685,
+		-0.001622994669507603, -5.56455315259749673e-05,
+		-1.35720808599938951e-06, -2.47515152461894642e-08,
+		-3.50257291219662472e-10, -3.95770950530691961e-12,
+		-3.65327031259100284e-14
+	]
 
-    x2n = 0.5
+	x2n = 0.5
 
-    s = Gma[0] * x2a
-    s*= x2n
+	s = Gma[0] * x2a
+	s*= x2n
 
-    # Prepare recurrence iteration for next step
-    x2n *= x22
+	# Prepare recurrence iteration for next step
+	x2n *= x22
 
-    for n in range(10):
-        s += (Gma[n+1]*x2a + Ga[n+1]) * x2n
-        # Prepare recurrent iteration for next step
-        x2n *= x22
+	# stop
 
-    return s
+	for n in range(10):
+		s += (Gma[n+1]*x2a + Ga[n+1]) * x2n
+		# Prepare recurrent iteration for next step
+		x2n *= x22
+
+
+	return s
 
 
 
