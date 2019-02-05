@@ -993,8 +993,8 @@ if __name__ == "__main__":
 	offset_present = False
 	r0 = numpy.array([0.1]*n_layer)
 	L0 = numpy.array([25.]*n_layer)
-	shwfs_shift = numpy.array(([1,2],[0,0],[0,0]))
-	shwfs_rot = numpy.array([5,0,0])
+	shwfs_shift = numpy.array(([0,0],[0,0],[0,0]))
+	shwfs_rot = numpy.array([0,0,0])
 	roi_envelope = 6
 	roi_belowGround = 6
 	roi_axis = 'x and y'
@@ -1010,22 +1010,22 @@ if __name__ == "__main__":
 	fit_offset = False
 	offset_present = True
 
-	delta_xSep = numpy.array([2, 0, 0, 0])
-	delta_ySep = numpy.array([1, 0, 0, 0])
+	delta_xSep = numpy.array([1, 0, 0, 0])
+	delta_ySep = numpy.array([2, 0, 0, 0])
 
-	# """CANARY"""
-	# tel_diam = 4.2
-	# obs_diam = 1.0
-	# subap_diam = numpy.array([0.6]*n_wfs)
-	# n_subap = numpy.array([36]*n_wfs)
-	# nx_subap = numpy.array([7]*n_wfs)
+	"""CANARY"""
+	tel_diam = 4.2
+	obs_diam = 1.0
+	subap_diam = numpy.array([0.6]*n_wfs)
+	n_subap = numpy.array([36]*n_wfs)
+	nx_subap = numpy.array([7]*n_wfs)
 
-	"""AOF"""
-	tel_diam = 8.2
-	obs_diam = 0.94
-	subap_diam = numpy.array([0.205]*n_wfs)
-	n_subap = numpy.array([1248]*n_wfs)
-	nx_subap = numpy.array([40]*n_wfs)
+	# """AOF"""
+	# tel_diam = 8.2
+	# obs_diam = 0.94
+	# subap_diam = numpy.array([0.205]*n_wfs)
+	# n_subap = numpy.array([1248]*n_wfs)
+	# nx_subap = numpy.array([40]*n_wfs)
 
 	# """HARMONI"""
 	# tel_diam = 39.0
@@ -1043,21 +1043,23 @@ if __name__ == "__main__":
 	onesMat, wfsMat_1, wfsMat_2, allMapPos_acrossMap, selector, xy_separations_acrossMap = roi_referenceArrays(pupil_mask, 
 		gs_pos, tel_diam, pupil_mask.shape[0]-1, roi_envelope)
 
+	s1 = time.time()
 	params = covariance_roi_l3s(pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, 
 		gs_pos, n_layer, layer_alt, L0, allMapPos_acrossMap, xy_separations_acrossMap, roi_axis, 
 		roi_belowGround, roi_envelope, styc_method=True, lgs_track_present=False, offset_present=False, 
 		fit_layer_alt=True, fit_lgs_track=False, fit_offset=False, fit_L0=False, wind_profiling=True)
-	
+	print('Conf: {}'.format(time.time() - s1))
 	
 	s = time.time()
 	r = params._make_covariance_roi_l3s_(layer_alt, r0, L0, 
 		lgs_track=lgs_track, shwfs_shift=shwfs_shift, shwfs_rot=shwfs_rot, 
 		delta_xSep=delta_xSep, delta_ySep=delta_ySep)
 	f = time.time()
-	print('Time Taken: {}'.format(f-s))
+	print('Make: {}'.format(f-s))
 
 	pyplot.figure()
 	pyplot.imshow(r)
+
 
 
 

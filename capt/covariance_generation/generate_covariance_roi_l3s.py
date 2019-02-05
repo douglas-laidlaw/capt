@@ -54,7 +54,6 @@ class covariance_roi_l3s(object):
 		self.gs_pos = gs_pos[:,::-1] # Swap X and Y GS positions to agree with legacy code
 		self.L0 = L0
 		self.n_layer = n_layer
-		# self.layer_alt = layer_alt
 		self.radSqaured_to_arcsecSqaured = ((180./numpy.pi) * 3600)**2  
 		self.combs = int(comb(gs_pos.shape[0], 2, exact=True))
 		self.roi_width = 1 + (2*self.roi_envelope)
@@ -221,7 +220,6 @@ class covariance_roi_l3s(object):
 				if self.offset_present==True and self.fit_offset==self.wind_profiling==self.fit_L0==self.fit_layer_alt==False:
 					self.offset_set=True
 
-
 		#calculate covariance map ROI
 		r0_scale2 = (L0/r0)**(5./3)
 		roi_l3s = (self.covariance_slice_matrix * r0_scale2).sum(3) * self.radSqaured_to_arcsecSqaured
@@ -238,8 +236,6 @@ class covariance_roi_l3s(object):
 			self.roi_width, self.n_wfs, self.map_length * self.length_mult)).sum(2)
 		#covariance map ROI with ground-layer mitigated (with length = self.map_length).
 		roi_l3s = roi_l3s.reshape(self.combs * self.roi_width, self.map_length * self.length_mult)
-
-		# stop
 
 		#convert roi_l3s to its final specifications (axes and ROI length)
 		if self.roi_axis=='x':
@@ -262,10 +258,7 @@ class covariance_roi_l3s(object):
 
 			roi_l3s += self.lgs_track
 
-		# pyplot.figure()
-		# pyplot.imshow(roi_l3s)
-
-		return roi_l3s#, self.covariance_slice_matrix*r0_scale2*self.radSqaured_to_arcsecSqaured
+		return roi_l3s
 
 
 
@@ -299,6 +292,8 @@ class covariance_roi_l3s(object):
 
 
 
+
+
 	def subap_parameters(self, layer_alt):
 		"""Calculate initial parameters that are fixed i.e. translation of sub-aperture positions with altitude."""
 
@@ -306,11 +301,10 @@ class covariance_roi_l3s(object):
 			for comb in range(self.combs):
 
 				gs_pos = self.gs_pos[self.selector[comb, wfs_n]]
-				# layer_altitude = layer_alt
 
 				# Scale for LGS
 				if self.gs_alt[self.selector[comb, wfs_n]] != 0:
-					# print("Its an LGS!")
+					# print("Its a LGS!")
 					self.scale_factor[:, comb] = (1 - layer_alt/self.gs_alt[self.selector[comb,wfs_n]])
 				else:
 					self.scale_factor[:, comb] = 1.
@@ -323,6 +317,8 @@ class covariance_roi_l3s(object):
 				self.subap_layer_diameters[:, wfs_n, comb] = self.subap_diam[self.selector[comb, wfs_n]] * self.scale_factor[:, comb]
 
 		self.translation = (self.translation.T * layer_alt).T
+
+
 
 
 
@@ -441,7 +437,6 @@ class covariance_roi_l3s(object):
 						if self.wind_profiling==True:
 							self.covariance_slice_matrix[gs_comb, rr:ss, uu:vv] += self.cov_xx[1, gs_comb, comb] * r0_scale1
 
-
 				if self.roi_axis=='y':
 
 					if comb == self.combs:
@@ -468,8 +463,6 @@ class covariance_roi_l3s(object):
 						self.covariance_slice_matrix[gs_comb, r:s, u:v] += numpy.hstack((self.cov_xx[0, gs_comb, comb], self.cov_yy[0, gs_comb, comb])) * r0_scale1
 						if self.wind_profiling==True:
 							self.covariance_slice_matrix[gs_comb, rr:ss, uu:vv] += numpy.hstack((self.cov_xx[1, gs_comb, comb], self.cov_yy[1, gs_comb, comb])) * r0_scale1
-
-
 
 				if comb!=self.combs:
 
@@ -508,7 +501,6 @@ class covariance_roi_l3s(object):
 			for comb in range(self.combs+1):
 				
 				if comb==self.combs:
-					# xy_seps = self.aligned_xy_separations[gs_comb].copy() * self.scale_factor[layer_n, gs_comb]
 					xy_seps = numpy.stack([self.aligned_xy_separations[gs_comb]]*self.n_layer, 2)
 					xy_seps *= numpy.stack([self.scale_factor[:, gs_comb]]*2, 1)
 
@@ -518,17 +510,13 @@ class covariance_roi_l3s(object):
 				
 				else:
 					translation = self.translation[:, 1, comb] - self.translation[:, 0, comb]
-					# print(self.scale_factor[layer_n, comb])
 					if self.compute_cov_offset==True:
-						# xy_seps = self.xy_separations[gs_comb, comb].copy() * self.scale_factor[layer_n, comb]
 						xy_seps = numpy.stack([self.xy_separations[gs_comb, comb]]*self.n_layer, 3)
 						xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
 
 						offset_present = True
 						mean_denom = self.meanDenominator[gs_comb]
 					else:
-						# d=ogg
-						# xy_seps = self.xy_separations[gs_comb].copy() * self.scale_factor[layer_n, comb]
 						xy_seps = numpy.stack([self.xy_separations[gs_comb]]*self.n_layer, 2)
 						xy_seps *= numpy.stack([self.scale_factor[:, comb]]*2, 1)
 
@@ -537,7 +525,6 @@ class covariance_roi_l3s(object):
 
 				#if wind profiling, shift x and y SHWFS sub-aperture separations
 				if self.wind_profiling==True:
-					# d=stop
 					if self.offset_present==True or self.fit_offset==True:
 						if comb!=self.combs:
 							xy_seps[:,:,:,:,0] += self.delta_xSep
@@ -556,28 +543,13 @@ class covariance_roi_l3s(object):
 				else:
 					xy_seps = numpy.expand_dims(xy_seps, axis=0)
 
-
-
 				#calculate required xx covariance
 				if self.roi_axis != 'y':
-
-					t = compute_covariance_xx(xy_seps, 
-						self.subap_layer_diameters[:, 0, gs_comb]/2., 
-						self.subap_layer_diameters[:, 1, gs_comb]/2., translation, 
-						L0, offset_present)/mean_denom
 
 					self.cov_xx[:, gs_comb, comb] = compute_covariance_xx(xy_seps, 
 						self.subap_layer_diameters[:, 0, gs_comb]/2., 
 						self.subap_layer_diameters[:, 1, gs_comb]/2., translation, 
 						L0, offset_present)/mean_denom
-					# stop
-					# if self.wind_profiling==True and comb!=self.combs:
-					# 	self.cov_xx_reverse[gs_comb, comb] = compute_covariance_xx(-xy_seps, 
-					# 		self.subap_layer_diameters[:, 0, gs_comb]/2., 
-					# 		self.subap_layer_diameters[:, 1, gs_comb]/2., translation, 
-					# 		L0, offset_present)/mean_denom
-
-					# stop
 
 				#calculate required yy covariance
 				if self.roi_axis != 'x':
@@ -585,12 +557,6 @@ class covariance_roi_l3s(object):
 						self.subap_layer_diameters[:, 0, gs_comb]/2., 
 						self.subap_layer_diameters[:, 1, gs_comb]/2., translation, 
 						L0, offset_present)/mean_denom
-					
-					# if self.wind_profiling==True and comb!=self.combs:
-					# 	self.cov_yy_reverse[gs_comb, comb] = compute_covariance_yy(-xy_seps, 
-					# 		self.subap_layer_diameters[:, 0, gs_comb]/2., 
-					# 		self.subap_layer_diameters[:, 1, gs_comb]/2., translation, 
-					# 		L0, offset_present)/mean_denom
 
 
 
@@ -629,6 +595,8 @@ class covariance_roi_l3s(object):
 						sf_dx = wfs1_diam/100.
 						self.cov_xx[gs_comb, layer_n, comb, env], self.cov_yy[gs_comb, layer_n, comb, 
 							env] = compute_ztilt_covariances(n_subaps1, xy_sep, sf, sf_dx, nSamp, wfs1_diam)
+
+
 
 
 
@@ -1011,8 +979,8 @@ if __name__ == "__main__":
 	offset_present = False
 	r0 = numpy.array([0.1]*n_layer)
 	L0 = numpy.array([25.]*n_layer)
-	shwfs_shift = numpy.array(([1,2],[0,0],[0,0]))
-	shwfs_rot = numpy.array([5,0,0])
+	shwfs_shift = numpy.array(([0,0],[0,0],[0,0]))
+	shwfs_rot = numpy.array([0,0,0])
 	roi_envelope = 6
 	roi_belowGround = 6
 	roi_axis = 'x and y'
@@ -1064,8 +1032,8 @@ if __name__ == "__main__":
 	s1 = time.time()
 	params = covariance_roi_l3s(pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, 
 		gs_pos, n_layer, layer_alt, L0, allMapPos_acrossMap, xy_separations_acrossMap, roi_axis, 
-		roi_belowGround, roi_envelope, styc_method=True, lgs_track_present=False, offset_present=True, 
-		fit_layer_alt=True, fit_lgs_track=False, fit_offset=False, fit_L0=False, wind_profiling=False)
+		roi_belowGround, roi_envelope, styc_method=True, lgs_track_present=False, offset_present=False, 
+		fit_layer_alt=True, fit_lgs_track=False, fit_offset=False, fit_L0=False, wind_profiling=True)
 	print('Conf: {}'.format(time.time() - s1))
 	
 	s = time.time()
