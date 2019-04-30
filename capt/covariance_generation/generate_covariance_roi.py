@@ -874,13 +874,15 @@ def macdo_x56(x):
 
 
 if __name__ == "__main__":
+	
+	
 	n_wfs = 3
 	gs_alt = numpy.array([90000]*n_wfs)
 	gs_pos = numpy.array([[0.,-20.], [0.,20], [30,0]])
 	wavelength = numpy.array([500e-9]*n_wfs)
-	n_layer = 4
+	n_layer = 1
 	# layer_alt = numpy.array([0])
-	layer_alt = numpy.array([0, 2000, 4000, 9282])
+	layer_alt = numpy.array([0])
 	fit_L0 = False
 	offset_present = False
 	r0 = numpy.array([0.1]*n_layer)
@@ -937,8 +939,8 @@ if __name__ == "__main__":
 	
 	params = covariance_roi(pupil_mask, subap_diam, wavelength, tel_diam, n_subap, gs_alt, 
 		gs_pos, n_layer, layer_alt, L0, allMapPos, xy_separations, roi_axis, styc_method=True, 
-		tt_track_present=True, lgs_track_present=False, offset_present=False, fit_layer_alt=True, 
-		fit_tt_track=False, fit_lgs_track=False, fit_offset=False, fit_L0=False, wind_profiling=True)
+		tt_track_present=False, lgs_track_present=False, offset_present=False, fit_layer_alt=False, 
+		fit_tt_track=False, fit_lgs_track=False, fit_offset=False, fit_L0=False, wind_profiling=False)
 	
 	
 	s = time.time()

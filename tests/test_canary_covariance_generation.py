@@ -24,8 +24,9 @@ def generate_covariance(configuration, air_mass, tas, pix_arc,
     #     False, conf.shwfs_shift, conf.shwfs_rot, l3s1_transform=False, 
     #     tt_track_present=True, offset_present=False)
 
-    # pyplot.figure()
-    # pyplot.imshow(mat)
+    pyplot.figure()
+    pyplot.imshow(mat)
+    print(mat[0,0])
     # pyplot.figure()
     # pyplot.imshow(roi)
     return mat, roi

@@ -22,9 +22,9 @@ SHWFS:
 
 FITTING PARAMETERS:
   n_layer: 2.
-  layer_alt: [0., 9282.]
-  guess_r0: [0.2, 0.2]
-  guess_L0: [10., 100.]
+  layer_alt: [0., 1000]
+  guess_r0: [0.30, 0.30]
+  guess_L0: [25., 25.]
 
 TARGET ARRAY:
   cent_start: 0
@@ -44,7 +44,7 @@ TARGET ARRAY:
 
 FITTING ALGORITHM:
   type: l3s
-  repetitions: 1
+  repetitions: 3
   styc_method: True
   force_altRange: True
   huge_matrix: True
@@ -70,7 +70,7 @@ FITTING ALGORITHM:
     fit_1_globalL0: False
     fit_1_rot: False
     fit_1_shift: False
-    fit_1_lgs_track: False
+    fit_1_lgs_track: True
 
     fit_2_r0: True
     fit_2_L0: True
@@ -79,7 +79,7 @@ FITTING ALGORITHM:
     fit_2_tt_track: True
     fit_2_lgs_track: False
 
-    fit_3: False
+    fit_3: True
     fit_3_r0: False
     fit_3_L0: False
     fit_3_globalL0: False

@@ -553,7 +553,7 @@ class turbulence_profiler(object):
             guess_L0_ground, guess_r0_ground, self.roi_belowGround, self.roi_envelope, self.zeroSep_locations, 
             self.allMapPos, self.xy_separations)
         print('###################### FITTING L3S.2 ######################','\n')
-        success, r0_ground, L0_ground, self.tt_track, lgs_track_ground, self.shwfs_rot, self.shwfs_shift, cov_fit_ground, its_l3s2, start_l3s2_2 = params.covariance_fit(
+        success, r0_ground, L0_ground, tt_track_ground, lgs_track_ground, self.shwfs_rot, self.shwfs_shift, cov_fit_ground, its_l3s2, start_l3s2_2 = params.covariance_fit(
             self, cov_meas_ground, layer_alt_ground*self.air_mass, guess_r0_ground, guess_L0_ground, self.tt_track, 
             self.lgs_track, self.shwfs_shift, self.shwfs_rot, fit_r0=self.fit_2_r0, fit_L0=self.fit_2_L0, 
             fit_tt_track=self.fit_2_tt_track, fit_lgs_track=self.fit_2_lgs_track, fit_shift=self.fit_2_shift, fit_rot=self.fit_2_rot)
@@ -564,9 +564,9 @@ class turbulence_profiler(object):
         Cn2 = calc_Cn2(r0, self.wavelength[0])/self.air_mass
         L0 = numpy.append(L0_ground, L0_aloft[1:n_layer_aloft])
         self.lgs_track = lgs_track_aloft + lgs_track_ground
+        self.tt_track = tt_track_aloft + tt_track_ground
         layer_alt = numpy.append(layer_alt_ground, layer_alt_aloft[1:n_layer_aloft])
         n_layer = layer_alt.shape[0]
-
 
 
         ######## L3S. 3 ########
