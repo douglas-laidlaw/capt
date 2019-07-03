@@ -15,12 +15,13 @@ def generate_covariance(configuration, air_mass, tas, pix_arc,
     roi = capt.turbulence_profiler.make_covariance_roi(
         conf, conf.pupil_mask, air_mass, tas, conf.gs_alt, conf.layer_alt, conf.guess_r0, conf.guess_L0, conf.tt_track, 
         False, conf.shwfs_shift, conf.shwfs_rot, l3s1_transform=False, tt_track_present=False, 
-        lgs_track_present=False, offset_present=False)
+        lgs_track_present=False, offset_present=True)
+    mat=0
 
-    mat = capt.turbulence_profiler.make_covariance_matrix(
-        conf, conf.pupil_mask, air_mass, tas, conf.gs_alt, conf.layer_alt, conf.guess_r0, conf.guess_L0, conf.tt_track, 
-        False, conf.shwfs_shift, conf.shwfs_rot, l3s1_transform=False, target_array='Covariance Map ROI', 
-        tt_track_present=False, lgs_track_present=False, offset_present=False)
+    # mat = capt.turbulence_profiler.make_covariance_matrix(
+    #     conf, conf.pupil_mask, air_mass, tas, conf.gs_alt, conf.layer_alt, conf.guess_r0, conf.guess_L0, conf.tt_track, 
+    #     False, conf.shwfs_shift, conf.shwfs_rot, l3s1_transform=False, target_array='Covariance Map ROI', 
+    #     tt_track_present=False, lgs_track_present=False, offset_present=False)
 
     return mat, roi
 
@@ -34,8 +35,8 @@ if __name__ == '__main__':
 
     matrix, roi = generate_covariance(configuration, air_mass, canary_tas, pix_arc, shwfs_centroids)
 
-    pyplot.figure('matrix')
-    pyplot.imshow(matrix)
+    # pyplot.figure('matrix')
+    # pyplot.imshow(matrix)
 
-    pyplot.figure('roi')
+    pyplot.figure()
     pyplot.imshow(roi)

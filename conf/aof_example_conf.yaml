@@ -15,16 +15,16 @@ SHWFS:
   wavelength: [500e-9, 500e-9]
   subap_fov: [1.5, 1.5]
   pxls_per_subap: [10, 10]
-  offset_present: False
+  offset_present: True
   shift_offset_x: [0., 0.]
   shift_offset_y: [0., 0.]
-  rotational_offset: [0., 0.]
+  rotational_offset: [-10., -10.]
 
 FITTING PARAMETERS:
-  n_layer: 1.
-  layer_alt: [0.]
-  guess_r0: [0.05]
-  guess_L0: [25.]
+  n_layer: 2.
+  layer_alt: [0., 5000]
+  guess_r0: [0.1, 0.1]
+  guess_L0: [25., 25.]
 
 TARGET ARRAY:
   cent_start: 0
@@ -39,8 +39,8 @@ TARGET ARRAY:
   zeroSep_cov: False
   mapping_type: mean
   map_axis: 'x and y'
-  roi_belowGround: 39
-  roi_envelope: 39
+  roi_belowGround: 2
+  roi_envelope: 2
 
 FITTING ALGORITHM:
   type: direct
