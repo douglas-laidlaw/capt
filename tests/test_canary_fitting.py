@@ -17,6 +17,7 @@ def get_turbulenceProfile_information(configuration, air_mass, tas, pix_arc,
     
     return results
 
+
 if __name__ == '__main__':
 
     air_mass = 1.
