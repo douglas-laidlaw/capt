@@ -19,16 +19,15 @@ def generate_covariance(configuration, air_mass, tas, pix_arc,
     print(time.time() - st)
 
     roi = numpy.nan
-    # roi = capt.turbulence_profiler.make_covariance_roi(
-    #     conf, conf.pupil_mask, air_mass, tas, conf.gs_alt, conf.layer_alt, conf.guess_r0, conf.guess_L0, conf.tt_track, 
-    #     False, conf.shwfs_shift, conf.shwfs_rot, l3s1_transform=False, 
-    #     tt_track_present=True, offset_present=False)
+    roi = capt.turbulence_profiler.make_covariance_roi(
+        conf, conf.pupil_mask, air_mass, tas, conf.gs_alt, conf.layer_alt, conf.guess_r0, conf.guess_L0, conf.tt_track, 
+        False, conf.shwfs_shift, conf.shwfs_rot, l3s1_transform=False, 
+        tt_track_present=True, offset_present=False)
 
     pyplot.figure()
     pyplot.imshow(mat)
-    print(mat[0,0])
-    # pyplot.figure()
-    # pyplot.imshow(roi)
+    pyplot.figure()
+    pyplot.imshow(roi)
     return mat, roi
 
 if __name__ == '__main__':

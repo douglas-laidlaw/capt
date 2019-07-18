@@ -47,7 +47,7 @@ FITTING ALGORITHM:
   repetitions: 3
   styc_method: True
   force_altRange: True
-  huge_matrix: True
+  huge_matrix: False
   print_fitting: True
   cn2_noiseFloor: 1e-16
   remove_tt: False
