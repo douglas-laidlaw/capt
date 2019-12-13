@@ -47,6 +47,7 @@ class covariance_matrix(object):
 		self.wavelength = wavelength
 		self.tel_diam = tel_diam
 		self.pupil_mask = pupil_mask
+		self.n_subap_from_pupilMask = int(self.pupil_mask.sum())
 		self.gs_alt = gs_alt
         # Swap X and Y GS positions to agree with legacy code
 		self.gs_pos = gs_pos[:,::-1]
@@ -56,7 +57,7 @@ class covariance_matrix(object):
 		selector = numpy.array((range(self.n_wfs)))
 		self.selector = numpy.array((list(itertools.combinations(selector, 2))))
 		self.n_subap = n_subap
-		self.total_subaps = int(numpy.sum(self.n_subap))
+		self.total_subaps = int(numpy.sum(self.pupil_mask)*self.n_wfs)
 		self.styc_method = styc_method
 		self.radSqaured_to_arcsecSqaured = ((180./numpy.pi) * 3600)**2
 		self.fit_L0 = fit_L0
@@ -74,21 +75,21 @@ class covariance_matrix(object):
 		self.fit_tt_track = fit_tt_track
 		self.tt_track_present = tt_track_present
 		if self.fit_tt_track==True or self.tt_track_present==True:
-			self.tt_trackMatrix_locs = tt_trackMatrix_locs(2 * self.n_subap[0] * self.n_wfs, self.n_subap[0])
+			self.tt_trackMatrix_locs = tt_trackMatrix_locs(2 * self.n_subap_from_pupilMask * self.n_wfs, self.n_subap_from_pupilMask)
 			self.tt_track = numpy.zeros((self.tt_trackMatrix_locs.shape)).astype('float64')
 
 		self.lgs_track_set = False
 		self.fit_lgs_track = fit_lgs_track
 		self.lgs_track_present = lgs_track_present
 		if self.fit_lgs_track==True or self.lgs_track_present==True:
-			self.lgs_trackMatrix_locs = matrix_lgs_trackMatrix_locs(2 * self.n_subap[0] * self.n_wfs, self.n_subap)
+			self.lgs_trackMatrix_locs = matrix_lgs_trackMatrix_locs(2 * self.n_subap_from_pupilMask * self.n_wfs, self.n_subap, self.n_subap_from_pupilMask)
 			self.lgs_track = numpy.zeros((self.lgs_trackMatrix_locs.shape)).astype('float64')
 
 		#make l3s1 transform matrix
 		self.l3s1_transform = l3s1_transform
 		if l3s1_transform==True:
 			if l3s1_matrix is None:
-				self.l3s1_matrix = transform_matrix(self.n_subap, self.n_wfs)
+				self.l3s1_matrix = transform_matrix(numpy.array([self.n_subap_from_pupilMask]*self.n_wfs), self.n_wfs)
 			else:
 				self.l3s1_matrix = l3s1_matrix
 
@@ -96,43 +97,46 @@ class covariance_matrix(object):
 		self.remove_tt = remove_tt
 		if remove_tt==True:
 			if remove_tt_matrix is None:
-				self.remove_tt_matrix = tt_removal_matrix(self.n_subap[0], self.n_wfs)
+				self.remove_tt_matrix = tt_removal_matrix(self.n_subap_from_pupilMask, self.n_wfs)
 			else:
 				self.remove_tt_matrix = remove_tt_matrix
 
 		#parameters required for fast generation of aligned/auto covariance 
-		self.mm, mmc, md = get_mappingMatrix(self.pupil_mask, 
-			numpy.ones((self.n_subap[0], self.n_subap[0])))
-		mapOnes = covMap_superFast((pupil_mask.shape[0]*2)-1, 
-			numpy.ones((self.n_subap[0], self.n_subap[0])), self.mm, mmc, md)
+		mat_roi = numpy.ones((int(self.pupil_mask.sum()), int(self.pupil_mask.sum())))
+		self.mm, mmc, md = get_mappingMatrix(self.pupil_mask, mat_roi)
+		mapOnes = covMap_superFast((pupil_mask.shape[0]*2)-1, mat_roi, self.mm, mmc, md)
 		self.flatMM = mapOnes.flatten().astype('int')
 		self.fill_xx = numpy.zeros(self.flatMM.shape)
 		self.fill_yy = numpy.zeros(self.flatMM.shape)
 		self.fill_xy = numpy.zeros(self.flatMM.shape)
 
-		yMapSep = mapOnes.copy() * numpy.arange(-(pupil_mask.shape[0]-1), 
+		loc_mapOnes = numpy.where(mapOnes==1)
+		covMapDim = (self.pupil_mask.shape[0]*2)-1
+
+		xMapSep = numpy.ones((covMapDim, covMapDim)) * numpy.arange(-(pupil_mask.shape[0]-1), 
 			(pupil_mask.shape[0])) * self.tel_diam/pupil_mask.shape[0]
-		yMapSepFlat = yMapSep.flatten()
-		xMapSep = yMapSep.copy().T
 		xMapSepFlat = xMapSep.flatten()
+		yMapSep = xMapSep.copy().T
+		yMapSepFlat = yMapSep.flatten()
 		
+		yloc_mapOnes = xMapSep[loc_mapOnes[0], loc_mapOnes[1]]
+		xloc_mapOnes = yMapSep[loc_mapOnes[0], loc_mapOnes[1]]
+
 		if self.offset_present==False and self.fit_offset==False:
 			self.subap_positions = [False]*self.n_wfs
-			self.xy_separations = numpy.array((xMapSepFlat[self.flatMM==1], 
-				yMapSepFlat[self.flatMM==1])).T
+			self.xy_separations = numpy.array((xloc_mapOnes, yloc_mapOnes)).T
 
 		if self.offset_present==True or self.fit_offset==True:
 			self.subap_positions_wfsAlignment = numpy.zeros((self.n_wfs, 
-				self.n_subap[0], 2)).astype("float64")
+				self.n_subap_from_pupilMask, 2)).astype("float64")
 			wfs_subap_pos = (numpy.array(numpy.where(self.pupil_mask== 1)).T * 
 				self.tel_diam/self.pupil_mask.shape[0])
 			self.subap_positions = numpy.array([wfs_subap_pos]*self.n_wfs)
 
-			self.auto_xy_separations = numpy.array((xMapSepFlat[self.flatMM==1], 
-							yMapSepFlat[self.flatMM==1])).T
+			self.auto_xy_separations = numpy.array((xloc_mapOnes, yloc_mapOnes)).T
 
 		if huge_matrix==True:
-			print('THIS MATRIX BE HUUUUGGGEEEE')
+			print('\n'+'THIS MATRIX BE HUUUUGGGEEEE')
 			self.huge_matrix = True
 		else:
 			self.huge_matrix = False
@@ -205,7 +209,6 @@ class covariance_matrix(object):
 				(L0/r0)**(5./3.)).T).sum(0)) * self.radSqaured_to_arcsecSqaured
 		else:
 			covariance_matrix_output = self.covariance_matrix * self.radSqaured_to_arcsecSqaured
-
 
 		if self.l3s1_transform==True:
 			covariance_matrix_output = numpy.matmul(numpy.matmul(self.l3s1_matrix, covariance_matrix_output), self.l3s1_matrix.T)
@@ -293,10 +296,11 @@ class covariance_matrix(object):
 			uu = xtp * numpy.cos(theta) - ytp * numpy.sin(theta)
 			vv = xtp * numpy.sin(theta) + ytp * numpy.cos(theta)
 
-			self.subap_positions_wfsAlignment[wfs_i,:,1] = uu + shwfs_shift[wfs_i,1]
-			self.subap_positions_wfsAlignment[wfs_i,:,0] = vv + shwfs_shift[wfs_i,0]
+			self.subap_positions_wfsAlignment[wfs_i,:,1] = uu - shwfs_shift[wfs_i,0]
+			self.subap_positions_wfsAlignment[wfs_i,:,0] = vv - shwfs_shift[wfs_i,1]
 
-		# d=off
+
+
 
 	def compile_matrix(self, r0, L0):
 		"""Build covariance matrix.
@@ -317,8 +321,8 @@ class covariance_matrix(object):
 					
 					if self.offset_present==True or self.fit_offset==True:
 						if wfs_i!=wfs_j:
-							xy_separations = calculate_wfs_separations(self.n_subap[wfs_i], 
-								self.n_subap[wfs_j], self.subap_positions_wfsAlignment[wfs_i], 
+							xy_separations = calculate_wfs_separations(self.n_subap_from_pupilMask, 
+								self.n_subap_from_pupilMask, self.subap_positions_wfsAlignment[wfs_i], 
 								self.subap_positions_wfsAlignment[wfs_j])
 						else:
 							xy_separations = self.auto_xy_separations
@@ -336,8 +340,7 @@ class covariance_matrix(object):
 							self.translation[layer_n, wfs_i], self.translation[layer_n, wfs_j], 
 							self.styc_method, self.matrix_xy)
 
-						auto_cov_xx, auto_cov_yy, auto_cov_xy = self.map_aligned_covariance(auto_cov_xx, auto_cov_yy, auto_cov_xy, 
-								self.n_subap[wfs_i], self.n_subap[wfs_j])
+						auto_cov_xx, auto_cov_yy, auto_cov_xy = self.map_aligned_covariance(auto_cov_xx, auto_cov_yy, auto_cov_xy, self.n_subap_from_pupilMask)
 					
 					if wfs_i==wfs_j:
 						cov_xx = auto_cov_xx
@@ -353,21 +356,26 @@ class covariance_matrix(object):
 							self.translation[layer_n, wfs_i], self.translation[layer_n, wfs_j], 
 							self.styc_method, self.matrix_xy)
 
-						if self.offset_present==False and self.fit_offset==False:
-							cov_xx, cov_yy, cov_xy = self.map_aligned_covariance(cov_xx, cov_yy, cov_xy, 
-								self.n_subap[wfs_i], self.n_subap[wfs_j])
 
-					subap_ni = int(numpy.sum(self.n_subap[:wfs_i]))
-					subap_nj = int(numpy.sum(self.n_subap[:wfs_j]))
+						if self.offset_present==False and self.fit_offset==False:
+							cov_xx, cov_yy, cov_xy = self.map_aligned_covariance(cov_xx, cov_yy, cov_xy, self.n_subap_from_pupilMask)
+
+
+					# subap_ni = int(numpy.sum(self.n_subap[:wfs_i]))
+					# subap_nj = int(numpy.sum(self.n_subap[:wfs_j]))
+
+					subap_ni = int(numpy.sum(self.pupil_mask))*wfs_i
+					subap_nj = int(numpy.sum(self.pupil_mask))*wfs_j
 
 					#coordinates of xx covariance
 					cov_mat_coord_x1 = subap_ni * 2
-					cov_mat_coord_x2 = subap_ni * 2 + self.n_subap[wfs_i]
+					cov_mat_coord_x2 = subap_ni * 2 + int(numpy.sum(self.pupil_mask))
 
 					#coordinates of yy covariance
 					cov_mat_coord_y1 = subap_nj * 2
-					cov_mat_coord_y2 = subap_nj * 2 + self.n_subap[wfs_j]
+					cov_mat_coord_y2 = subap_nj * 2 + int(numpy.sum(self.pupil_mask))
 					
+					# print(cov_mat_coord_x1, cov_mat_coord_x2, ';', cov_mat_coord_y1, cov_mat_coord_y2)
 					# r0_scale = ((self.wavelength[wfs_i] * self.wavelength[wfs_j]) / 
 					#     (8 * (numpy.pi**2) * self.subap_layer_diameters[layer_n][wfs_i] * 
 					#     self.subap_layer_diameters[layer_n][wfs_j])) / self.scale_factor[layer_n, wfs_i]
@@ -381,21 +389,21 @@ class covariance_matrix(object):
 						self.covariance_matrix[layer_n, cov_mat_coord_x1: cov_mat_coord_x2, 
 							cov_mat_coord_y1: cov_mat_coord_y2] = cov_xx * r0_scale
 
-						self.covariance_matrix[layer_n, cov_mat_coord_x1 + self.n_subap[wfs_i]: 
-							cov_mat_coord_x2 + self.n_subap[wfs_i], cov_mat_coord_y1 + self.n_subap[wfs_j]: 
-							cov_mat_coord_y2 + self.n_subap[wfs_j]] = cov_yy * r0_scale
+						self.covariance_matrix[layer_n, cov_mat_coord_x1 + self.n_subap_from_pupilMask: 
+							cov_mat_coord_x2 + self.n_subap_from_pupilMask, cov_mat_coord_y1 + self.n_subap_from_pupilMask: 
+							cov_mat_coord_y2 + self.n_subap_from_pupilMask] = cov_yy * r0_scale
 
 						if self.matrix_xy==True:
-							self.covariance_matrix[layer_n, cov_mat_coord_x1 + self.n_subap[wfs_i]: 
-								cov_mat_coord_x2 + self.n_subap[wfs_i], cov_mat_coord_y1: 
+							self.covariance_matrix[layer_n, cov_mat_coord_x1 + self.n_subap_from_pupilMask: 
+								cov_mat_coord_x2 + self.n_subap_from_pupilMask, cov_mat_coord_y1: 
 								cov_mat_coord_y2] = cov_xy * r0_scale
 
 							self.covariance_matrix[layer_n, cov_mat_coord_x1: cov_mat_coord_x2, 
-								cov_mat_coord_y1 + self.n_subap[wfs_j]: cov_mat_coord_y2 + 
-								self.n_subap[wfs_j]] = cov_xy * r0_scale
+								cov_mat_coord_y1 + self.n_subap_from_pupilMask: cov_mat_coord_y2 + 
+								self.n_subap_from_pupilMask] = cov_xy * r0_scale
 
 						self.covariance_matrix[layer_n] = mirror_covariance_matrix(self.covariance_matrix[layer_n], 
-							self.n_subap)
+							self.n_subap, self.n_subap_from_pupilMask)
 
 
 					if self.huge_matrix==True:
@@ -404,40 +412,44 @@ class covariance_matrix(object):
 						self.cov_mat[cov_mat_coord_x1: cov_mat_coord_x2, cov_mat_coord_y1: 
 							cov_mat_coord_y2] = cov_xx * r0_scale
 
-						self.cov_mat[cov_mat_coord_x1 + self.n_subap[wfs_i]: cov_mat_coord_x2 + 
-							self.n_subap[wfs_i], cov_mat_coord_y1 + self.n_subap[wfs_j]: 
-							cov_mat_coord_y2 + self.n_subap[wfs_j]] = cov_yy * r0_scale
+						self.cov_mat[cov_mat_coord_x1 + self.n_subap_from_pupilMask: cov_mat_coord_x2 + 
+							self.n_subap_from_pupilMask, cov_mat_coord_y1 + self.n_subap_from_pupilMask: 
+							cov_mat_coord_y2 + self.n_subap_from_pupilMask] = cov_yy * r0_scale
 
 						if self.matrix_xy==True:
-							self.cov_mat[cov_mat_coord_x1 + self.n_subap[wfs_i]: cov_mat_coord_x2 + 
-								self.n_subap[wfs_i], cov_mat_coord_y1: 
+							self.cov_mat[cov_mat_coord_x1 + self.n_subap_from_pupilMask: cov_mat_coord_x2 + 
+								self.n_subap_from_pupilMask, cov_mat_coord_y1: 
 								cov_mat_coord_y2] = cov_xy * r0_scale
 							
 							self.cov_mat[cov_mat_coord_x1: cov_mat_coord_x2, cov_mat_coord_y1 + 
-								self.n_subap[wfs_j]: cov_mat_coord_y2 + 
-								self.n_subap[wfs_j]] = cov_xy * r0_scale
+								self.n_subap_from_pupilMask: cov_mat_coord_y2 + 
+								self.n_subap_from_pupilMask] = cov_xy * r0_scale
 
 			if self.huge_matrix==True:
-				self.covariance_matrix += mirror_covariance_matrix(self.cov_mat, self.n_subap)
+				self.covariance_matrix += mirror_covariance_matrix(self.cov_mat, self.n_subap, self.n_subap_from_pupilMask)
 
 
-	def map_aligned_covariance(self, flatMap_covXX, flatMap_covYY, flatMap_covXY, wfs1_n_subap, wfs2_n_subap):
+
+
+
+	def map_aligned_covariance(self, flatMap_covXX, flatMap_covYY, flatMap_covXY, n_subap):
+
+		shape_arr = n_subap, n_subap
 		self.fill_xx[self.flatMM==1] = flatMap_covXX
-		cov_xx = (self.mm * self.fill_xx)[self.mm==1].reshape(wfs1_n_subap, 
-			wfs2_n_subap)
+		cov_xx = (self.mm * self.fill_xx)[self.mm==1].reshape(shape_arr)
 
 		self.fill_yy[self.flatMM==1] = flatMap_covYY
-		cov_yy = (self.mm * self.fill_yy)[self.mm==1].reshape(wfs1_n_subap, 
-			wfs2_n_subap)
+		cov_yy = (self.mm * self.fill_yy)[self.mm==1].reshape(shape_arr)
 
 		if self.matrix_xy==True:
 			self.fill_xy[self.flatMM==1] = flatMap_covXY
-			cov_xy = (self.mm * self.fill_xy)[self.mm==1].reshape(wfs1_n_subap, 
-				wfs2_n_subap)
+			cov_xy = (self.mm * self.fill_xy)[self.mm==1].reshape(shape_arr)
 		else:
 			cov_xy = 0.
 
 		return cov_xx, cov_yy, cov_xy
+
+
 
 
 def tt_trackMatrix_locs(size, subSize):
@@ -472,7 +484,7 @@ def tt_trackMatrix_locs(size, subSize):
 
 
 
-def matrix_lgs_trackMatrix_locs(size, n_subap):
+def matrix_lgs_trackMatrix_locs(size, n_subap, n_subap_from_pupilMask):
 	"""Creates a block matrix composed as three values. Number of sub-blocks
 	is calculated by the integer multiple of size and subSize.
 
@@ -492,24 +504,24 @@ def matrix_lgs_trackMatrix_locs(size, n_subap):
 	for i in numpy.arange(n_wfs):
 		m1=0
 		for j in range(i+1):
-			n2 = n1 + 2 * n_subap[i]
-			m2 = m1 + 2 * n_subap[j]
+			n2 = n1 + 2 * n_subap_from_pupilMask
+			m2 = m1 + 2 * n_subap_from_pupilMask
 
-			lgs_trackMatrix[n1:n1+n_subap[i], m1:m1+n_subap[j]] = tracker
+			lgs_trackMatrix[n1:n1+n_subap_from_pupilMask, m1:m1+n_subap_from_pupilMask] = tracker
 			tracker += 1
 
-			lgs_trackMatrix[n1+n_subap[i]:n2, m1+n_subap[j]:m2] = tracker
+			lgs_trackMatrix[n1+n_subap_from_pupilMask:n2, m1+n_subap_from_pupilMask:m2] = tracker
 			tracker += 1
 
-			m1 += 2 * n_subap[i]
-		n1 += 2 * n_subap[j]
+			m1 += 2 * n_subap_from_pupilMask
+		n1 += 2 * n_subap_from_pupilMask
 
-	return mirror_covariance_matrix(lgs_trackMatrix, n_subap)
-
-
+	return mirror_covariance_matrix(lgs_trackMatrix, n_subap, n_subap_from_pupilMask)
 
 
-def mirror_covariance_matrix(cov_mat, n_subap):
+
+
+def mirror_covariance_matrix(cov_mat, n_subap, n_subap_from_pupilMask):
     """Mirrors a covariance matrix around the diagonal.
 
     Parameters:
@@ -527,14 +539,14 @@ def mirror_covariance_matrix(cov_mat, n_subap):
         m1 = 0
         for m in range(n + 1):
             if n != m:
-                n2 = n1 + 2 * n_subap[n]
-                m2 = m1 + 2 * n_subap[m]
+                n2 = n1 + 2 * n_subap_from_pupilMask
+                m2 = m1 + 2 * n_subap_from_pupilMask
 
                 cov_mat[m1: m2, n1: n2] = (numpy.swapaxes(cov_mat[n1: n2, 
                     m1: m2], 1, 0))
 
-                m1 += 2 * n_subap[m]
-        n1 += 2 * n_subap[n]
+                m1 += 2 * n_subap_from_pupilMask
+        n1 += 2 * n_subap_from_pupilMask
     return cov_mat
 
 
@@ -559,7 +571,6 @@ def calculate_wfs_separations(n_subap1, n_subap2, wfs1_positions, wfs2_positions
     for i, (x2, y2) in enumerate(wfs1_positions):
         for j, (x1, y1) in enumerate(wfs2_positions):
             xy_separations[i, j] = (x1-x2), (y1-y2)
-
 
     return xy_separations
 

@@ -181,9 +181,9 @@ def covMap_superFast(covMapDim, covMatROI, mappingMatrix, mappingMatrixCoords, c
 
 
 if __name__ == '__main__':
-    pupil_mask = make_pupil_mask('circle', numpy.array([36]), 7, 1., 4.2)
-    grid = numpy.ones((36, 36))
-    mm_canary, mmc_canary, md_canary = get_mappingMatrix(pupil_mask, grid)
+    # pupil_mask = make_pupil_mask('circle', numpy.array([36]), 7, 1., 4.2)
+    # grid = numpy.ones((36, 36))
+    # mm_canary, mmc_canary, md_canary = get_mappingMatrix(pupil_mask, grid)
     # grid = numpy.ones((30, 30))
     # pupil_mask[:,3]=0
     # mm_canary, mmc_canary, md_canary = get_mappingMatrix(pupil_mask, grid)
@@ -192,13 +192,13 @@ if __name__ == '__main__':
     # numpy.save('mmc_canary.npy', mmc_canary)
     # numpy.save('md_canary.npy', md_canary)
 
-    # pupil_mask = make_pupil_mask('circle', numpy.array([1240]), 40, 1.1, 8.20)
-    # grid = numpy.ones((1240, 1240))
-    # mm_aof, mmc_aof, md_aof = get_mappingMatrix(pupil_mask, grid)
-    # c_map = covMap_superFast(79, grid, mm_aof, mmc_aof, md_aof)
-    # numpy.save('mm_aof.npy', mm_aof)
-    # numpy.save('mmc_aof.npy', mmc_aof)
-    # numpy.save('md_aof.npy', md_aof)
+    pupil_mask = make_pupil_mask('circle', numpy.array([1240]), 40, 1.1, 8.20)
+    grid = numpy.ones((1240, 1240))
+    mm_aof, mmc_aof, md_aof = get_mappingMatrix(pupil_mask, grid)
+    c_map = covMap_superFast(79, grid, mm_aof, mmc_aof, md_aof)
+    numpy.save('mm_aof.npy', mm_aof)
+    numpy.save('mmc_aof.npy', mmc_aof)
+    numpy.save('md_aof.npy', md_aof)
 
     # pupil_mask = make_pupil_mask('circle', numpy.array([4260]), 74, 4., 39.)
     # grid = numpy.ones((4260, 4260))

@@ -19,7 +19,7 @@ def covMap_fromMatrix(cov_matrix, n_wfs, nx_subap, n_subap, pupil_mask, roi_axis
 		roi_axis (str): in which axis/axes to make covariance map. 'x', 'y', 'x+y' or 'x and y'.
 		mm (ndarray): Mapping Matrix.
 		mmc (ndarray): Mapping Matrix coordinates.
-		md (ndarray): co]variance map sub-aperture separation density.
+		md (ndarray): covariance map sub-aperture baseline pairing density.
 	
 	Returns:
 		ndarray: covariance map"""
@@ -63,15 +63,29 @@ def covMap_fromMatrix(cov_matrix, n_wfs, nx_subap, n_subap, pupil_mask, roi_axis
 
 
 if __name__ == '__main__':
-	"""Test"""
-	n_wfs = 2
-	nx_subap = 7
-	n_subap = 36
-	tel_diam = 4.2
-	obs_diam = 1.2
-	roi_axis = 'x+y'
-	pupil_mask = make_pupil_mask('circle', n_subap, nx_subap, obs_diam, tel_diam)
-	mm, mmc, md = get_mappingMatrix(pupil_mask, numpy.ones((n_subap, n_subap)))
+	"""Test CANARY"""
+	# n_wfs = 2
+	# nx_subap = numpy.array([7, 7])
+	# n_subap = numpy.array([36, 36])
+	# tel_diam = 4.2
+	# obs_diam = 1.0
+	# roi_axis = 'x+y'
+	# pupil_mask = make_pupil_mask('circle', numpy.array([n_subap[0]]), nx_subap[0], obs_diam, tel_diam)
+	# mm, mmc, md = get_mappingMatrix(pupil_mask, numpy.ones((n_subap[0], n_subap[0])))
 
-	cov_matrix = numpy.ones((n_wfs * n_subap * 2, n_wfs * n_subap * 2))
+	# cov_matrix = numpy.ones((n_wfs * n_subap[0] * 2, n_wfs * n_subap[0] * 2))
+	# cov_map  = covMap_fromMatrix(cov_matrix, n_wfs, nx_subap, n_subap, pupil_mask, roi_axis, mm, mmc, md)
+
+
+	"""Test AOF"""
+	n_wfs = 1
+	nx_subap = numpy.array([40, 40])
+	n_subap = numpy.array([1240, 1240])
+	tel_diam = 8.2
+	obs_diam = 1.1
+	roi_axis = 'x+y'
+	pupil_mask = make_pupil_mask('circle', numpy.array([n_subap[0]]), nx_subap[0], obs_diam, tel_diam)
+	mm, mmc, md = get_mappingMatrix(pupil_mask, numpy.ones((n_subap[0], n_subap[0])))
+
+	cov_matrix = numpy.ones((n_wfs * n_subap[0] * 2, n_wfs * n_subap[0] * 2))
 	cov_map  = covMap_fromMatrix(cov_matrix, n_wfs, nx_subap, n_subap, pupil_mask, roi_axis, mm, mmc, md)

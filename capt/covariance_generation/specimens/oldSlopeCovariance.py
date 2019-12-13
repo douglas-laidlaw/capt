@@ -521,9 +521,9 @@ if __name__=='__main__':
 
 	NLAYERS = 1
 	r0 = numpy.array([0.1]*NLAYERS)
-	L0 = numpy.array([25.]*NLAYERS)
+	L0 = numpy.array([10.]*NLAYERS)
 	# LAYERHEIGHTS = numpy.array([0])
-	LAYERHEIGHTS = numpy.array([9282])
+	LAYERHEIGHTS = numpy.array([0])
 
 	covMat = numpy.zeros((2*NSUBAPS.sum(), 2*NSUBAPS.sum()), dtype="float64")
 	c = matcov(NWFS, PUPIL_MASK, TEL_DIAM, NSUBAPS, NXSUBAPS, SUBAPDIAM, GSALT, GSPOS, NLAYERS, LAYERHEIGHTS, r0, L0, covMat, PUPILMAG, wfsRot=PUPILROT, pupilOffset=PUPILOFFSET) * ((180./numpy.pi) * 3600)**2

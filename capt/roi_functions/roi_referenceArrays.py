@@ -38,15 +38,19 @@ def roi_referenceArrays(pupil_mask, gs_pos, tel_diam, belowGround, envelope):
     posMatrix = numpy.ones((nSubaps, nSubaps))
     
     #mm - mapping matrix, mmc - mapping matrix coordinates, md - map denominator
+    # mm, mmc, md = get_mappingMatrix(numpy.fliplr(pupil_mask), posMatrix)
+    # mm, mmc, md = get_mappingMatrix(numpy.fliplr(pupil_mask), posMatrix)
     mm, mmc, md = get_mappingMatrix(pupil_mask, posMatrix)
     mm = mm.astype(int)
     onesMap = covMap_superFast(covMapDim, posMatrix, mm, mmc, md)
     nanMap = onesMap.copy()
-    nanMap[onesMap==0] = numpy.nan
+    nanMap[nanMap==0] = numpy.nan
 
     #sa_mm - mm sub-aperture numbering of shwfs1, sb_mm - mm sub-aperture numbering of shwfs2
     sa_mm, mmc, md = get_mappingMatrix(pupil_mask, posMatrix*numpy.arange(nSubaps)[::-1])
     sb_mm, mmc, md = get_mappingMatrix(pupil_mask, numpy.rot90(posMatrix*numpy.arange(nSubaps)[::-1],3))
+    # sb_mm, mmc, md = get_mappingMatrix(pupil_mask, posMatrix*numpy.arange(nSubaps))
+    # sa_mm, mmc, md = get_mappingMatrix(pupil_mask, numpy.rot90(posMatrix*numpy.arange(nSubaps),3))
     sa_mm = sa_mm.astype(int)
     sb_mm = sb_mm.astype(int)
 
@@ -54,7 +58,7 @@ def roi_referenceArrays(pupil_mask, gs_pos, tel_diam, belowGround, envelope):
     combs = int(comb(gs_pos.shape[0], 2, exact=True))
     selector = numpy.array((range(gs_pos.shape[0])))
     selector = numpy.array((list(itertools.combinations(selector, 2))))
-    fakePosMap, b, t = gamma_vector(blankCovMap, 1, 'False', belowGround, envelope, False)
+    # fakePosMap, b, t = gamma_vector(blankCovMap, 1, 'False', belowGround, envelope, False)
     # print('No. of GS combinations:', combs, '\n')
 
     #Sub-aperture postions for generateSliceCovariance and map vectors for mapSliceFromSlopes
@@ -70,13 +74,19 @@ def roi_referenceArrays(pupil_mask, gs_pos, tel_diam, belowGround, envelope):
     refArray = arrayRef(pupil_mask)
 
     #x and y separations in covariance map space - used to get xy_separations
-    yMapSep = nanMap.copy() * numpy.arange(-(pupil_mask.shape[0]-1), (pupil_mask.shape[0])) * tel_diam/pupil_mask.shape[0] 
-    xMapSep = yMapSep.copy().T
+    yMapSep_square = numpy.ones(nanMap.shape) * numpy.arange(-(pupil_mask.shape[0]-1), (pupil_mask.shape[0])) * tel_diam/pupil_mask.shape[0] 
+    # yMapSep = nanMap.copy() * numpy.arange(-(pupil_mask.shape[0]-1), (pupil_mask.shape[0])) * tel_diam/pupil_mask.shape[0] 
+    yMapSep = nanMap.copy() * yMapSep_square
+    xMapSep = nanMap.copy() * yMapSep_square.T
     xy_separations = numpy.zeros((combs, sliceWidth, sliceLength, 2))
 
+    # stop
     for k in range(combs):
         posMap = 0.
         posMap, vector, t = gamma_vector(blankCovMap, 'False', gs_pos[selector[k]], belowGround, envelope, False)    #gets covariance map vector
+        # posMap[:,:,0] = numpy.flipud(posMap[:,:,0])
+        # posMap[:,:,1] = numpy.flipud(posMap[:,:,1])
+        # vector = numpy.rot90(vector,1)
 
         xy_separations[k] = numpy.stack((xMapSep[posMap.T[0], posMap.T[1]], yMapSep[posMap.T[0], posMap.T[1]])).T
 
@@ -85,7 +95,6 @@ def roi_referenceArrays(pupil_mask, gs_pos, tel_diam, belowGround, envelope):
             for j in range(posMap.shape[1]):
                 if onesMap[posMap[i,j,0], posMap[i,j,1]] == 0:
                     posMap[i,j] = 2*covMapDim, 2*covMapDim
-
 
         #Sub-aperture positions for specific GS combination. All non-positions are nan
         subapPos1 = numpy.ones(posMap.shape)*numpy.nan
@@ -131,19 +140,21 @@ def roi_referenceArrays(pupil_mask, gs_pos, tel_diam, belowGround, envelope):
     subapPos.append(subapPos1[0])
     subapPos.append(subapPos2[0])
 
+    # stop
+
     # print('\n'+'################ REFERENCE ARRAYS OBTAINED ###############', '\n')
     return mm, sa_mm, sb_mm, allMapPos, selector, xy_separations
 
 
 if __name__=='__main__':
     mask = 'circle'
-    n_subap = 36
-    nx_subap = 7
-    obs_diam = 1.2
+    n_subap = numpy.array([36,36])
+    nx_subap = numpy.array([7, 7])
+    obs_diam = 1.0
     tel_diam = 4.2
-    pupil_mask = make_pupil_mask(mask, n_subap, nx_subap, obs_diam, tel_diam)
-    gs_pos = numpy.array([(0, -20), (0, 20)])
-    belowGround = 0
-    envelope = 0
+    pupil_mask = make_pupil_mask(mask, n_subap, nx_subap[0], obs_diam, tel_diam)
+    gs_pos = numpy.array([(0, 20), (0, -20)])
+    belowGround = 6
+    envelope = 6
 
     mm, sa_mm, sb_mm, allMapPos, selector, xy_separations = roi_referenceArrays(pupil_mask, gs_pos, tel_diam, belowGround, envelope)

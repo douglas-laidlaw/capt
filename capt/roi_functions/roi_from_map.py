@@ -20,7 +20,6 @@ def roi_from_map(covMaps, gs_pos, pupil_mask, selector, belowGround, envelope):
 	Returns:
 		ndarray: covariance map ROI."""
 
-	nSubaps = int(pupil_mask.sum())
 	nxSubaps = int(pupil_mask.shape[0])
 	covMapDim = (2*nxSubaps)-1
 	blankCovMap = numpy.zeros((covMapDim, covMapDim))

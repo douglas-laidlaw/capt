@@ -46,7 +46,7 @@ class fitting_parameters(object):
         if self.target_array=='Covariance Map ROI':
             if self.method=='Direct Fit':
                 self.generationParams = covariance_roi(tp.pupil_mask, tp.subap_diam, 
-                    tp.wavelength, tp.tel_diam, tp.n_subap, tp.gs_alt, tp.gs_pos, n_layer, 
+                    tp.wavelength, tp.tel_diam, tp.n_subap, tp.gs_dist, tp.gs_pos, n_layer, 
                     layer_alt, L0, allMapPos, xy_separations, tp.map_axis, styc_method=tp.styc_method, 
                     wind_profiling=False, tt_track_present=tt_track_present, lgs_track_present=lgs_track_present,
                     offset_present=offset_present, fit_layer_alt=False, fit_tt_track=fit_tt_track, 
@@ -55,8 +55,9 @@ class fitting_parameters(object):
             if self.method=='L3S Fit':
                 onesMat, wfsMat_1, wfsMat_2, allMapPos_acrossMap, selector, xy_separations_acrossMap = roi_referenceArrays(
                     tp.pupil_mask, tp.gs_pos, tp.tel_diam, tp.pupil_mask.shape[0]-1, tp.roi_envelope)
+                
                 self.generationParams = covariance_roi_l3s(tp.pupil_mask, tp.subap_diam, tp.wavelength, 
-                    tp.tel_diam, tp.n_subap, tp.gs_alt, tp.gs_pos, n_layer, layer_alt, L0, allMapPos_acrossMap, 
+                    tp.tel_diam, tp.n_subap, tp.gs_dist, tp.gs_pos, n_layer, layer_alt, L0, allMapPos_acrossMap, 
                     xy_separations_acrossMap, tp.map_axis, tp.roi_belowGround, tp.roi_envelope, 
                     styc_method=tp.styc_method, wind_profiling=False, lgs_track_present=lgs_track_present, 
                     offset_present=offset_present, fit_layer_alt=False, fit_lgs_track=fit_lgs_track, 
@@ -72,7 +73,7 @@ class fitting_parameters(object):
                 rem_tt = True
 
             self.generationParams = covariance_matrix(tp.pupil_mask, tp.subap_diam, tp.wavelength, 
-                tp.tel_diam, tp.n_subap, tp.gs_alt, tp.gs_pos, n_layer, layer_alt, r0, L0, 
+                tp.tel_diam, tp.n_subap, tp.gs_dist, tp.gs_pos, n_layer, layer_alt, r0, L0, 
                 styc_method=tp.styc_method, wind_profiling=False, tt_track_present=tt_track_present, 
                 lgs_track_present=lgs_track_present, offset_present=offset_present, fit_layer_alt=False, 
                 fit_tt_track=fit_tt_track, fit_lgs_track=fit_lgs_track, fit_offset=fit_offset, 
@@ -84,6 +85,7 @@ class fitting_parameters(object):
                 self.n_wfs = tp.n_wfs
                 self.nx_subap = tp.nx_subap
                 self.n_subap = tp.n_subap
+                self.n_subap_from_pupilMask = tp.n_subap_from_pupilMask
                 self.pupil_mask = tp.pupil_mask
                 self.map_axis = tp.map_axis
                 self.mm = tp.mm
@@ -234,6 +236,7 @@ class fitting_parameters(object):
 
         self.staticArgs = (cov_meas, layer_alt, r0, tt_track, lgs_track, L0, groundL0, globalL0, shwfs_shift, shwfs_rot, callback)
         theo_results = root(self.cov_opt, guess, self.staticArgs, method="lm", tol=0.)
+        # stopthis
         return theo_results['status'], self.r0, self.L0, self.tt_track, self.lgs_track, self.shwfs_rot, self.shwfs_shift, self.theo_cov, self.count, self.generationParams.timingStart
 
 
@@ -257,7 +260,7 @@ class fitting_parameters(object):
 
         if self.output_fitted_array==True:
             self.theo_cov = theo_cov
-
+        
         return numpy.sqrt(residual).flatten()
 
 
@@ -319,7 +322,7 @@ class fitting_parameters(object):
         lgs_track = lgs_track.copy().reshape(2*self.gs_combs)
         for i, val in enumerate(lgs_track):
             if val==None:
-                lgs_track[i] = numpy.abs(covSliceParams[np])
+                lgs_track[i] = covSliceParams[np]
                 np+=1
         lgs_track.resize(self.gs_combs, 2)
 
@@ -335,6 +338,9 @@ class fitting_parameters(object):
             if val==None:
                 shwfs_rot[i] = covSliceParams[np]
                 np+=1
+
+        if self.method=='Direct Fit':
+            lgs_track = numpy.abs(lgs_track)
 
         if self.target_array=='Covariance Map ROI':
             
@@ -361,7 +367,7 @@ class fitting_parameters(object):
                 covariance[self.zeroSep_locations] = 0.
 
             if self.target_array=='Covariance Map':
-                covariance = covMap_fromMatrix(covariance, self.n_wfs, self.nx_subap, self.n_subap, 
+                covariance = covMap_fromMatrix(covariance, self.n_wfs, self.nx_subap, self.n_subap_from_pupilMask, 
                     self.pupil_mask, self.map_axis, self.mm, self.mmc, self.md)
 
                 
@@ -372,7 +378,7 @@ class fitting_parameters(object):
             print("Iteration:", self.count)
             print("Target Array:", self.target_array)
             print("Method:", self.method)
-            print("Layer Altitudes:", layer_alt)
+            print("Layer Distance:", layer_alt)
             print("L0:", L0)
             print("TT Track:", tt_track)
             if self.using_lgs==True:
